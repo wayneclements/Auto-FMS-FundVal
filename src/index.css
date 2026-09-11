@@ -1,0 +1,21 @@
+:root {
+  font: 12px "Segoe UI", Tahoma, sans-serif;
+  color: #000;
+  background: #ffffff;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+body {
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}

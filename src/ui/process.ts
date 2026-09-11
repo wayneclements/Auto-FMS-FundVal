@@ -1,0 +1,335 @@
+import { processFMDIH, processFMITIH, processFMPPFR, processFMPPPD, processFMATI, processFMAR, processFMAPTP, processFMBS, processFMCP, processFMDC, processFMDP, processFMDIRM, processFMDRM, processFMCIA, processFMFCPS, processFMHAI, processFMPRPC, processFMRBFSR, processFMRBRR, processFMPRBMR, processFMPSM, processFMPDDD, processFMTCFP, processFMCFP, processFMMFRP, processFMPDCD, processFMMFA, processFMPCP, processFMPASF, processFMPPD, processFMPDD, processFMMFD, processFMPMFI, processFMPMIP, processFMPMIPD, processFMSD, processFMTUE } from './actions.ts'
+
+export type ProcessInvestmentGroup = {
+  name: string
+  state: boolean
+}
+
+export async function processFMSDbutton(_environment: string, _company: string, _investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date) {
+  return processFMSD(_fundValDate)
+}
+
+export async function processFMPPFRbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date) {
+  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  if (activeInvestmentGroups.length === 0) return false
+
+  for (const investmentGroup of activeInvestmentGroups) {
+    if (!await processFMPPFR(investmentGroup.name)) return false
+  }
+
+  return true
+}
+
+export async function processFMPPPbutton(environment: string, company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  window.alert(`Process handler invoked in ${environment} for ${company}: processFMPPPbutton (${fundValDate.toLocaleDateString()}); investment groups: ${investmentGroups.map((group) => group.name).join(',') || 'none'}`); return true
+}
+
+export async function processFMPIVbutton(environment: string, company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  window.alert(`Process handler invoked in ${environment} for ${company}: processFMPIVbutton (${fundValDate.toLocaleDateString()}); investment groups: ${investmentGroups.map((group) => group.name).join(',') || 'none'}`); return true
+}
+
+export async function processFMFVRMbutton(environment: string, company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  window.alert(`Process handler invoked in ${environment} for ${company}: processFMFVRMbutton (${fundValDate.toLocaleDateString()}); investment groups: ${investmentGroups.map((group) => group.name).join(',') || 'none'}`); return true
+}
+
+export async function processFMPFVbutton(environment: string, company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  window.alert(`Process handler invoked in ${environment} for ${company}: processFMPFVbutton (${fundValDate.toLocaleDateString()}); investment groups: ${investmentGroups.map((group) => group.name).join(',') || 'none'}`); return true
+}
+
+export async function processFMFVbutton(environment: string, company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  window.alert(`Process handler invoked in ${environment} for ${company}: processFMFVbutton (${fundValDate.toLocaleDateString()}); investment groups: ${investmentGroups.map((group) => group.name).join(',') || 'none'}`); return true
+}
+
+export async function processFMBALbutton(environment: string, company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  window.alert(`Process handler invoked in ${environment} for ${company}: processFMBALbutton (${fundValDate.toLocaleDateString()}); investment groups: ${investmentGroups.map((group) => group.name).join(',') || 'none'}`); return true
+}
+
+export async function processFMPIbutton(environment: string, company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  window.alert(`Process handler invoked in ${environment} for ${company}: processFMPIbutton (${fundValDate.toLocaleDateString()}); investment groups: ${investmentGroups.map((group) => group.name).join(',') || 'none'}`); return true
+}
+
+export async function processFMPRDbutton(environment: string, company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  window.alert(`Process handler invoked in ${environment} for ${company}: processFMPRDbutton (${fundValDate.toLocaleDateString()}); investment groups: ${investmentGroups.map((group) => group.name).join(',') || 'none'}`); return true
+}
+
+export async function processFMPIDbutton(environment: string, company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  window.alert(`Process handler invoked in ${environment} for ${company}: processFMPIDbutton (${fundValDate.toLocaleDateString()}); investment groups: ${investmentGroups.map((group) => group.name).join(',') || 'none'}`); return true
+}
+
+export async function processFMPPPDbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date) {
+  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  if (activeInvestmentGroups.length === 0) return false
+
+  for (const investmentGroup of activeInvestmentGroups) {
+    if (!await processFMPPPD(investmentGroup.name)) return false
+  }
+
+  return true
+}
+
+export async function processFMDCbutton(environment: string, company: string, _investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  return processFMDC(environment, company, fundValDate)
+}
+
+export async function processFMITIHbutton(_environment: string, _company: string, _investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  return processFMITIH(fundValDate)
+}
+
+export async function processFMDIHbutton(_environment: string, _company: string, _investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  return processFMDIH(fundValDate)
+}
+
+export async function processFMATIbutton(_environment: string, _company: string, _investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date) {
+  return processFMATI()
+}
+
+export async function processFMHAIbutton(_environment: string, _company: string, _investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date) {
+  return processFMHAI()
+}
+
+export async function processFMCPbutton(_environment: string, _company: string, _investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  return processFMCP(fundValDate)
+}
+
+export async function processFMTUEbutton(_environment: string, _company: string, _investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  return processFMTUE(fundValDate)
+}
+
+export async function processFMDRMbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  if (activeInvestmentGroups.length === 0) return false
+
+  for (const investmentGroup of activeInvestmentGroups) {
+    if (!await processFMDRM(investmentGroup.name, fundValDate)) return false
+  }
+
+  return true
+}
+
+export async function processFMCIAbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  if (activeInvestmentGroups.length === 0) return false
+
+  for (const investmentGroup of activeInvestmentGroups) {
+    if (!await processFMCIA(investmentGroup.name, fundValDate)) return false
+  }
+
+  return true
+}
+
+export async function processFMDPbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  if (activeInvestmentGroups.length === 0) return false
+
+  for (const investmentGroup of activeInvestmentGroups) {
+    if (!await processFMDP(investmentGroup.name, fundValDate)) return false
+  }
+
+  return true
+}
+
+export async function processFMBSbutton(_environment: string, _company: string, _investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  return processFMBS(fundValDate)
+}
+
+export async function processFMPRPCbutton(_environment: string, _company: string, _investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  return processFMPRPC(fundValDate)
+}
+
+export async function processFMFCPSbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  if (activeInvestmentGroups.length === 0) return false
+
+  for (const investmentGroup of activeInvestmentGroups) {
+    if (!await processFMFCPS(investmentGroup.name, fundValDate)) return false
+  }
+
+  return true
+}
+
+export async function processFMRBFSRbutton(_environment: string, _company: string, _investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  return processFMRBFSR(fundValDate)
+}
+
+export async function processFMPSMbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  if (activeInvestmentGroups.length === 0) return false
+
+  for (const investmentGroup of activeInvestmentGroups) {
+    if (!await processFMPSM('', investmentGroup.name, fundValDate)) return false
+  }
+
+  return true
+}
+
+export async function processFMPDDDbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  if (activeInvestmentGroups.length === 0) return false
+
+  for (const _investmentGroup of activeInvestmentGroups) {
+    if (!await processFMPDDD(fundValDate, '1')) return false
+  }
+
+  return true
+}
+
+export async function processFMARbutton(environment: string, _company: string, _investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  return processFMAR(environment, fundValDate)
+}
+
+export async function processFMTCFPbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  if (activeInvestmentGroups.length === 0) return false
+
+  for (const investmentGroup of activeInvestmentGroups) {
+    if (!await processFMTCFP(investmentGroup.name, fundValDate)) return false
+  }
+
+  return true
+}
+
+export async function processFMPIFbutton(environment: string, company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  window.alert(`Process handler invoked in ${environment} for ${company}: processFMPIFbutton (${fundValDate.toLocaleDateString()}); investment groups: ${investmentGroups.map((group) => group.name).join(',') || 'none'}`); return true
+}
+
+export async function processFMPMIPbutton(_environment: string, _company: string, _investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  return processFMPMIP(fundValDate, '1')
+}
+
+export async function processFMRBRRbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  if (activeInvestmentGroups.length === 0) return false
+
+  for (const investmentGroup of activeInvestmentGroups) {
+    if (!await processFMRBRR(investmentGroup.name, fundValDate)) return false
+  }
+
+  return true
+}
+
+export async function processFMPRBMRbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  if (activeInvestmentGroups.length === 0) return false
+
+  for (const investmentGroup of activeInvestmentGroups) {
+    if (!await processFMPRBMR(investmentGroup.name, fundValDate)) return false
+  }
+
+  return true
+}
+
+export async function processFMPDCDbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  if (activeInvestmentGroups.length === 0) return false
+
+  for (const investmentGroup of activeInvestmentGroups) {
+    if (!await processFMPDCD(investmentGroup.name, fundValDate)) return false
+  }
+
+  return true
+}
+
+export async function processFMMFRPbutton(_environment: string, _company: string, _investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  return processFMMFRP(fundValDate)
+}
+
+export async function processFMMFAbutton(environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  if (activeInvestmentGroups.length === 0) return false
+
+  for (const investmentGroup of activeInvestmentGroups) {
+    if (!await processFMMFA(environment, investmentGroup.name, fundValDate)) return false
+  }
+
+  return true
+}
+
+export async function processFMPASFbutton(_environment: string, _company: string, _investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  return processFMPASF(fundValDate, '1')
+}
+
+export async function processFMPPDbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  if (activeInvestmentGroups.length === 0) return false
+
+  for (const investmentGroup of activeInvestmentGroups) {
+    if (!await processFMPPD(investmentGroup.name, fundValDate)) return false
+  }
+
+  return true
+}
+
+export async function processFMDIRMbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  if (activeInvestmentGroups.length === 0) return false
+
+  for (const investmentGroup of activeInvestmentGroups) {
+    if (!await processFMDIRM(investmentGroup.name, fundValDate, '', '', '', '')) return false
+  }
+
+  return true
+}
+
+export async function processFMPCPbutton(_environment: string, _company: string, _investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  return processFMPCP(fundValDate)
+}
+
+export async function processFMPSMREPbutton(environment: string, company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  window.alert(`Process handler invoked in ${environment} for ${company}: processFMPSMREPbutton (${fundValDate.toLocaleDateString()}); investment groups: ${investmentGroups.map((group) => group.name).join(',') || 'none'}`); return true
+}
+
+export async function processFMPFBBRbutton(environment: string, company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) { window.alert(`Process handler invoked in ${environment} for ${company}: processFMPFBBRbutton (${fundValDate.toLocaleDateString()}); investment groups: ${investmentGroups.map((group) => group.name).join(',') || 'none'}`); return true }
+
+export async function processFMPMIPDbutton(_environment: string, _company: string, _investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  return processFMPMIPD(fundValDate, '1')
+}
+
+export async function processFMSWGbutton(environment: string, company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  window.alert(`Process handler invoked in ${environment} for ${company}: processFMSWGbutton (${fundValDate.toLocaleDateString()}); investment groups: ${investmentGroups.map((group) => group.name).join(',') || 'none'}`); return true
+}
+
+export async function processFMPMFIbutton(_environment: string, _company: string, _investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  return processFMPMFI(fundValDate)
+}
+
+export async function processFMCFPbutton(_environment: string, _company: string, _investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  return processFMCFP(fundValDate)
+}
+
+export async function processFMMFDbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  if (activeInvestmentGroups.length === 0) return false
+
+  for (const investmentGroup of activeInvestmentGroups) {
+    if (!await processFMMFD(investmentGroup.name, fundValDate)) return false
+  }
+
+  return true
+}
+
+export async function processFMPDDbutton(_environment: string, _company: string, _investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  return processFMPDD(fundValDate, '1')
+}
+
+export async function processFMAPTPbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date) {
+  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  if (activeInvestmentGroups.length === 0) return false
+
+  for (const investmentGroup of activeInvestmentGroups) {
+    if (!await processFMAPTP(investmentGroup.name)) return false
+  }
+
+  return true
+}
+
+export async function processFMEOYFGbutton(environment: string, company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  window.alert(`Process handler invoked in ${environment} for ${company}: processFMEOYFGbutton (${fundValDate.toLocaleDateString()}); investment groups: ${investmentGroups.map((group) => group.name).join(',') || 'none'}`); return true
+}
+
+export async function processFMEOYPbutton(environment: string, company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  window.alert(`Process handler invoked in ${environment} for ${company}: processFMEOYPbutton (${fundValDate.toLocaleDateString()}); investment groups: ${investmentGroups.map((group) => group.name).join(',') || 'none'}`); return true
+}
+
+export async function processFMAPEOYPbutton(environment: string, company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+  window.alert(`Process handler invoked in ${environment} for ${company}: processFMAPEOYPbutton (${fundValDate.toLocaleDateString()}); investment groups: ${investmentGroups.map((group) => group.name).join(',') || 'none'}`); return true
+}
