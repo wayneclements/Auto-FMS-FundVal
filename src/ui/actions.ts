@@ -32,10 +32,6 @@ export async function processFMSD(fundValDate: Date): Promise<boolean> {
 	return nextDate.getTime() === nextBusinessDay.getTime()
 }
 
-function isRunningJobCompleted(_jobName: string, _investmentGroup: string, _submittedAt: Date): boolean {
-	return false
-}
-
 export async function processFMPPFR(investmentGroup: string): Promise<boolean> {
 	if (!await screens.gotoFmsScreen('FMPPFR', 'FIA445M1')) return false
 
@@ -47,6 +43,22 @@ export async function processFMPPFR(investmentGroup: string): Promise<boolean> {
 
 	const jobName = await screens.getScreenTextTrimmed(2, 8, 8)
 	return isRunningJobCompleted(jobName, investmentGroup, submittedAt)
+}
+
+export async function processFMPPP(investmentGroup: string): Promise<boolean> {
+	if (!await screens.gotoFmsScreen('FMPPP', 'FIA450M1')) return false
+
+	await typeReportDestination(10, 2, 22, 'Excel Report Dest')
+	await typeReportDestination(21, 2, 18, 'Report Server')
+	await screens.typeAndEnter(7, 22, investmentGroup.padStart(4, ' '))
+	await screens.waitForScreen('FIA450M1')
+	const dateTimeNow = await screens.pleaseConfirm('Y')
+
+	if (await screens.confirm(2, 31, 'FMPPP has been submitted for processing')) {
+		return isRunningJobCompleted(await screens.getScreenTextTrimmed(2, 8, 8), investmentGroup, dateTimeNow)
+	}
+
+	return false
 }
 
 export async function processFMPPPD(investmentGroup: string): Promise<boolean> {
@@ -64,8 +76,453 @@ export async function processFMPPPD(investmentGroup: string): Promise<boolean> {
 	return isRunningJobCompleted(jobName, investmentGroup, submittedAt)
 }
 
+export async function processFMPIV(fundValDate: Date): Promise<boolean> {
+	if (await isJobAlreadySuccessful('FMPIV')) return true
+	if (!await screens.gotoFmsScreen('FMPIV', 'FIS696M1')) return false
+
+	await typeReportDestination(19, 4, 39, 'Report Destination')
+	if (await screens.confirm(2, 2, 'FMPIV for this company should be run in Cpny - 001')) {
+		return screens.confirm(4, 2, '008')
+	}
+
+	if (await screens.confirm(6, 46, 'AUNSW')) await screens.typeDate(8, 25, 30, 35, fundValDate)
+	if (await screens.confirm(6, 46, 'NZAUK')) await screens.typeDate(8, 42, 47, 52, fundValDate)
+	await screens.enter()
+
+	if (await screens.confirm(1, 2, 'FMPIV Date must after last FMPI Date for location AUNSW')) return true
+	if (await screens.confirm(1, 2, "Please enter 'Y'es for a future date for location AUNSW")) await screens.typeAndEnter(17, 39, 'Y')
+	if (await screens.confirm(1, 2, 'FMPI Run Date cannot be a weekend or public holiday')) return true
+
+	const dateTimeNow = await screens.pleaseConfirm('Y')
+	if (await screens.confirm(2, 31, 'FMPIV has been submitted for processing')) {
+		return isJobCompleted(await screens.getScreenTextTrimmed(2, 8, 8), dateTimeNow)
+	}
+
+	return false
+}
+
+async function getFundValuationRatesMaintenanceRow(_fundValDate: Date, ..._statuses: string[]): Promise<number> {
+	return 0
+}
+
+async function getCFFundValuationRatesMaintenanceRow(_fundValDate: Date): Promise<number> {
+	return 0
+}
+
+async function verifyFundValuationRatesMaintenanceRow(_row: number): Promise<boolean> {
+	return false
+}
+
+async function processFMFVRMverify(_row: number, _fundValDate: Date): Promise<boolean> {
+	return false
+}
+
+async function enterFMFVRMeffectiveDate(_fundValDate: Date): Promise<void> {
+}
+
+async function enterFMFVRMspecialRateFlag(_fundValDate: Date): Promise<void> {
+}
+
+function smallRandom(multiplier: number): number {
+	return Math.floor(Math.random() * (1000 * multiplier)) / 1000
+}
+
+async function updateExistingRates(): Promise<void> {
+	const firstRow = 10
+	const lastRow = 21
+
+	while (await screens.getInteger(5, 70, 2) > 1) await screens.setAction('PF7')
+
+	while (true) {
+		for (let row = firstRow; row <= lastRow; row++) {
+			let spread = 0.001
+			if ((await screens.getScreenText(row, 7, 20)).includes('Cash')) spread = 0.000
+
+			const issuePrice = await screens.getDecimal(row, 28, 8)
+			let redeemPrice = issuePrice
+			if (redeemPrice > spread) redeemPrice -= spread
+			const netAssetPrice = (issuePrice + redeemPrice) / 2
+			const unitMfp = netAssetPrice
+
+			if (!await screens.isProtected(row, 28, 8)) await screens.type(row, 28, issuePrice.toFixed(4))
+			if (!await screens.isProtected(row, 37, 8)) await screens.type(row, 37, redeemPrice.toFixed(4))
+			if (!await screens.isProtected(row, 46, 11)) await screens.type(row, 46, netAssetPrice.toFixed(4))
+			if (!await screens.isProtected(row, 58, 11)) await screens.type(row, 58, unitMfp.toFixed(4))
+		}
+
+		if (await screens.getScreenTextTrimmed(24, 50, 1) === '') return
+
+		await screens.setAction('PF8')
+	}
+}
+
+async function addMissingRates(): Promise<void> {
+	const firstRow = 10
+	const lastRow = 21
+
+	while (true) {
+		for (let row = firstRow; row <= lastRow; row++) {
+			let spread = 0.001
+			if ((await screens.getScreenText(row, 7, 20)).includes('Cash')) spread = 0.000
+
+			const issuePrice = smallRandom(1)
+			let redeemPrice = issuePrice
+			if (redeemPrice > spread) redeemPrice -= spread
+			const netAssetPrice = (issuePrice + redeemPrice) / 2
+			const unitMfp = netAssetPrice
+
+			if (await screens.getDecimal(row, 28, 8) === 0 && !await screens.isProtected(row, 28, 8)) await screens.type(row, 28, issuePrice.toFixed(4))
+			if (await screens.getDecimal(row, 37, 8) === 0 && !await screens.isProtected(row, 37, 8)) await screens.type(row, 37, redeemPrice.toFixed(4))
+			if (await screens.getDecimal(row, 46, 11) === 0 && !await screens.isProtected(row, 46, 11)) await screens.type(row, 46, netAssetPrice.toFixed(4))
+			if (await screens.getDecimal(row, 58, 11) === 0 && !await screens.isProtected(row, 58, 11)) await screens.type(row, 58, unitMfp.toFixed(4))
+		}
+
+		if (await screens.getScreenTextTrimmed(24, 50, 1) === '') return
+
+		await screens.setAction('PF8')
+	}
+}
+
+export async function processFMFVRM(investmentGroup: string, fundValDate: Date): Promise<boolean> {
+	if (!await screens.gotoFmsScreen('FMFVRM', 'FIS051M1')) return false
+
+	await screens.typeAndEnter(5, 15, investmentGroup.padStart(4, ' '))
+	if (await screens.confirm(8, 14, 'Invalid Printer ID')) await screens.typeAndEnter(12, 14, 'S')
+
+	if (await screens.waitForScreen('FIG102M2')) {
+		let row = await getFundValuationRatesMaintenanceRow(fundValDate)
+		if (row > 0) {
+			if (await screens.confirm(row, 46, 'Verified')) return true
+			if (await processFMFVRMverify(row, fundValDate)) return screens.confirm(row, 46, 'Verified')
+			return false
+		}
+
+		if (!await screens.waitForScreen('FIG102M2')) return false
+
+		while (await screens.getInteger(5, 70, 2) > 1) await screens.setAction('PF7')
+
+		if (await screens.confirm(10, 4, '') && await screens.isProtected(10, 4, 1)) {
+			await screens.typeAndEnter(10, 2, 'C')
+			if (!await screens.waitForScreen('FIG103M1', 'FIG103M3', 'FIG103M4')) return false
+
+			if (await screens.confirm(7, 2, 'Effective Date')) await screens.typeDate(7, 19, 24, 29, fundValDate)
+			if (await screens.confirm(8, 2, 'Special Rate')) await screens.type(8, 19, ' ')
+			await addMissingRates()
+			while (!await screens.confirm(23, 20, 'Please Confirm')) {
+				if (await screens.confirm(2, 2, 'Issue Price Must be Greater than Zero')) return false
+				await screens.enter()
+			}
+			await screens.pleaseConfirm('Y')
+			await updateExistingRates()
+			await screens.enter()
+
+			if (await screens.waitForScreen('FIG102M2', 'FIG103M1', 'FIG103M3', 'FIG102M2', 'FIG103M4', 'FIG103M4')) {
+				await screens.pleaseConfirm('Y')
+				if (!await screens.gotoFmsScreen('FMFVRM', 'FIS051M1')) return false
+
+				await screens.typeAndEnter(5, 15, investmentGroup.padStart(4, ' '))
+				if (!await screens.waitForScreen('FIG102M2', 'FIG103M3', 'FIG102M2', 'FIG103M4', 'FIG103M4')) return false
+
+				row = await getFundValuationRatesMaintenanceRow(fundValDate, 'Verified')
+				if (row > 0) return true
+
+				row = await getFundValuationRatesMaintenanceRow(fundValDate, 'Input')
+				if (row > 0) return processFMFVRMverify(row, fundValDate)
+
+				return false
+			}
+
+			return false
+		}
+
+		await screens.typeAndEnter(10, 2, 'C')
+		if (!await screens.waitForScreen('FIG102M2', 'FIG103M1', 'FIG103M3', 'FIG102M2', 'FIG103M4', 'FIG103M4')) return false
+
+		if (await screens.confirm(1, 2, 'Invalid selection')) return false
+		await enterFMFVRMeffectiveDate(fundValDate)
+		await enterFMFVRMspecialRateFlag(fundValDate)
+		await screens.enter()
+
+		if (!await screens.waitForScreen('FIG102M2', 'FIG103M1', 'FIG103M3', 'FIG102M2', 'FIG103M4', 'FIG103M4')) return false
+
+		await screens.pleaseConfirm('Y')
+		if (!await screens.gotoFmsScreen('FMFVRM', 'FIS051M1')) return false
+
+		await screens.typeAndEnter(5, 15, investmentGroup.padStart(4, ' '))
+		if (!await screens.waitForScreen('FIG102M2', 'FIG103M3', 'FIG102M2', 'FIG103M4', 'FIG103M4')) return false
+
+		row = await getFundValuationRatesMaintenanceRow(fundValDate, 'Verified')
+		return row > 0
+	}
+
+	if (await screens.waitForScreen('FIB053M1')) {
+		const row = await getCFFundValuationRatesMaintenanceRow(fundValDate)
+		if (row <= 0) return false
+
+		await screens.typeAndEnter(row, 2, 'S')
+		if (await screens.waitForScreen('FIB102M6')) {
+			let statusRow = await getFundValuationRatesMaintenanceRow(fundValDate, 'Verified', 'Completed')
+			if (statusRow > 0) return true
+
+			statusRow = await getFundValuationRatesMaintenanceRow(fundValDate, 'Completed')
+			if (statusRow > 0) return false
+
+			statusRow = await getFundValuationRatesMaintenanceRow(fundValDate, 'Inputed')
+			if (statusRow > 0) return verifyFundValuationRatesMaintenanceRow(statusRow)
+
+			if (await screens.getScreenTextTrimmed(10, 4, 10) === '') return false
+
+			await screens.typeAndEnter(10, 2, 'A')
+			if (await screens.waitForScreen('FIB103M9')) {
+				if (await screens.confirm(8, 2, 'Effective Date')) await screens.typeDate(8, 21, 26, 31, fundValDate)
+				if (await screens.confirm(11, 2, 'Cash Management Trust')) {
+					if (await screens.confirm(13, 2, 'Interest Rate')) await screens.type(13, 21, '1')
+					if (await screens.confirm(14, 2, 'Mgmt Fee Price')) await screens.type(14, 21, '1')
+				}
+				while (!await screens.confirm(23, 20, 'Please Confirm')) {
+					await screens.enter()
+					if (await screens.confirm(1, 2, 'Interest rate is not allowed for Coporate fund products')) await screens.clearScreenText(13, 21, 8)
+				}
+				while (await screens.confirm(23, 20, 'Please Confirm')) await screens.pleaseConfirm('Y')
+
+				if (!await screens.waitForScreen('FIB102M6')) return false
+
+				statusRow = await getFundValuationRatesMaintenanceRow(fundValDate)
+				if (statusRow === 0) return false
+
+				if (await screens.confirm(statusRow, 51, 'Completed') || await screens.confirm(statusRow, 51, 'Verified')) return true
+				if (await screens.confirm(statusRow, 51, 'Inputed')) {
+					await screens.typeAndEnter(statusRow, 2, 'V')
+					if (!await screens.waitForScreen('FIB103M9')) return false
+
+					while (!await screens.confirm(23, 20, 'Please Confirm')) {
+						await screens.enter()
+						if (await screens.confirm(1, 2, 'Mgmt Fee Price not the same as input 1')) {
+							if (!await screens.isProtected(14, 21, 11)) await screens.type(14, 21, '1'.padEnd(11, ' '))
+						}
+					}
+					await screens.pleaseConfirm('Y')
+					return screens.waitForScreen('FIB102M6')
+				}
+				return false
+			}
+
+			if (await screens.waitForScreen('FIB102M6')) {
+				if (!await screens.confirm(1, 2, 'Last date unprocessed')) return false
+				if (!await screens.confirm(10, 51, 'Inputed')) return false
+
+				await screens.typeAndEnter(10, 2, 'V')
+				if (!await screens.waitForScreen('FIB103M9')) return false
+
+				while (!await screens.confirm(23, 20, 'Please Confirm')) await screens.enter()
+				await screens.pleaseConfirm('Y')
+				return screens.confirm(10, 51, 'Verified')
+			}
+
+			return false
+		}
+
+		await screens.typeAndEnter(9, 2, 'S')
+		if (!await screens.waitForScreen('FIB102M6')) return false
+
+		let statusRow = await getFundValuationRatesMaintenanceRow(fundValDate)
+		if (statusRow === 0) {
+			await screens.typeAndEnter(10, 2, 'A')
+			if (!await screens.waitForScreen('FIB103M9')) return false
+
+			await screens.typeDate(8, 21, 26, 31, fundValDate)
+			if (await screens.confirm(13, 2, 'Interest Rate')) await screens.type(13, 21, '1'.padEnd(8, ' '))
+			if (await screens.confirm(14, 2, 'Mgmt Fee Price')) await screens.type(14, 21, '2'.padEnd(11, ' '))
+			await screens.setAction('ENTER')
+			if (await screens.confirm(1, 2, 'Interest rate is not allowed for Coporate fund products')) {
+				await screens.typeAndEnter(13, 21, '0'.padEnd(8, ' '))
+			}
+
+			if (!await screens.confirm(23, 20, 'Please Confirm')) return false
+
+			await screens.pleaseConfirm('Y')
+			statusRow = await getFundValuationRatesMaintenanceRow(fundValDate)
+			if (statusRow === 0) return false
+
+			if (!await screens.confirm(statusRow, 51, 'Inputed')) return false
+
+			await screens.typeAndEnter(statusRow, 2, 'V')
+			if (!await screens.waitForScreen('FIB103M9')) return false
+
+			if (!await screens.confirm(13, 2, 'Interest Rate')) return false
+			await screens.type(13, 21, '1'.padEnd(8, ' '))
+			if (!await screens.confirm(14, 2, 'Mgmt Fee Price')) return false
+			await screens.type(14, 21, '2'.padEnd(11, ' '))
+			await screens.setAction('ENTER')
+			if (!await screens.confirm(23, 20, 'Please Confirm')) return false
+			await screens.pleaseConfirm('Y')
+
+			if (!await screens.waitForScreen('FIB102M6')) return false
+
+			statusRow = await getFundValuationRatesMaintenanceRow(fundValDate)
+			if (statusRow > 0) return screens.confirm(statusRow, 51, 'Verified')
+			return false
+		}
+
+		if (await screens.confirm(statusRow, 51, 'Inputed')) {
+			await screens.typeAndEnter(statusRow, 2, 'V')
+			await screens.waitForScreen('FIB103M9')
+			while (!await screens.confirm(23, 20, 'Please Confirm')) {
+				await screens.setAction('ENTER')
+				if (await screens.confirm(1, 2, 'Mgmt Fee Price not the same as input 2')) await screens.typeAndEnter(14, 21, '2'.padEnd(11, ' '))
+			}
+			await screens.pleaseConfirm('Y')
+			await screens.waitForScreen('FIB102M6')
+			return screens.confirm(statusRow, 51, 'Verified')
+		}
+
+		return screens.confirm(statusRow, 51, 'Verified')
+	}
+
+	return false
+}
+
+type InvestmentGroupTuple = [string, string, string]
+
+async function getListOfInvestmentGroups(): Promise<InvestmentGroupTuple[]> {
+	return []
+}
+
+async function processFMDRIM(_list: InvestmentGroupTuple[]): Promise<boolean> {
+	return false
+}
+
+export async function processFMPFV(): Promise<boolean> {
+	if (await isJobAlreadySuccessful('FMPFV')) return true
+	if (!await screens.gotoFmsScreen('FMPFV', 'FIS461M1')) return false
+
+	let successful = false
+	while (!successful) {
+		await typeReportDestination(16, 2, 22, 'Report Destination')
+		if (await screens.confirm(10, 2, 'Product Family')) await screens.typeAndEnter(10, 22, 'A')
+
+		if (await screens.confirm(2, 2, 'Please PF10 to check product errors before you continue')) {
+			await screens.setAction('PF10')
+			const list = await getListOfInvestmentGroups()
+			if (list.length === 0) return false
+
+			if (!await processFMDRIM(list)) return false
+			if (!await screens.gotoFmsScreen('FMPFV', 'FIS461M1')) return false
+		} else {
+			successful = true
+		}
+	}
+
+	if (!await screens.waitForScreen('FIS461M2')) return false
+
+	await screens.setAction('ENTER')
+	const dateTimeNow = await screens.pleaseConfirm('Y')
+	if (await screens.confirm(2, 31, 'FMPFV has been submitted for processing')) {
+		return isJobCompleted(await screens.getScreenTextTrimmed(2, 8, 8), dateTimeNow)
+	}
+
+	return false
+}
+
+async function getListOfReferences(_investmentGroup: string, _value: string): Promise<string[]> {
+	return []
+}
+
+async function processAccountPurchaseWithBanking(_value: string, _reference: string): Promise<void> {
+}
+
+export async function processFMFV(investmentGroup: string): Promise<boolean> {
+	if (!await screens.gotoFmsScreen('FMFV', 'FIS460M1')) return false
+
+	if (await screens.confirm(8, 14, 'Invalid Printer ID')) await screens.typeAndEnter(12, 14, 'S')
+	if (!await screens.confirm(9, 2, 'Investment Group')) return false
+
+	await typeReportDestination(13, 2, 22, 'Report Destination')
+	await screens.typeAndEnter(9, 22, investmentGroup.padEnd(4, ' '))
+
+	while (true) {
+		if (await screens.isProgramName('FIS310M1', 'FIN336M1', 'FIS301M1')) {
+			await screens.gotoFmsScreen('FMFV', 'FIS460M1')
+			if (await screens.confirm(8, 14, 'Invalid Printer ID')) await screens.typeAndEnter(12, 14, 'S')
+			if (await screens.confirm(9, 2, 'Investment Group')) {
+				await typeReportDestination(13, 2, 22, 'Report Destination')
+				await screens.typeAndEnter(9, 22, investmentGroup.padEnd(4, ' '))
+			}
+		}
+
+		if (!await screens.isProgramName('FIN460M1', 'FIS460M1', 'FIA460M1', 'FIB460M1', 'FIS460M2')) return false
+
+		if (await screens.confirm(14, 8, 'Do you still wish to continue to submit this Fund Val')) {
+			await screens.typeAndEnter(14, 64, 'Y')
+		}
+		if (await screens.confirm(1, 2, 'Unverified Address for Customer')) return false
+		if (await screens.confirm(1, 2, 'FVAL Has Been Applied')) return false
+		if (await screens.confirm(2, 27, 'must be RUN between FVAL')) return false
+		if (await screens.confirm(2, 2, 'Unverified Rdm for Acct')) return false
+		if (await screens.confirm(1, 2, 'Unverified Address for Account')) return false
+		if (await screens.getScreenTextTrimmed(24, 50, 1) !== '') await screens.setAction('PF8')
+		if (await screens.confirm(11, 27, 'FirstChoice WS Super is CLOSED')) return false
+		if (await screens.confirm(1, 2, 'BPAY processing must be done first')) return false
+		if (await screens.confirm(1, 2, 'FVAL has been applied')) return true
+		if (await screens.confirm(1, 2, 'End of Year Processing is not completed')) return false
+		if (await screens.confirm(2, 2, 'Redemption for Account 2 is not complete')) return false
+
+		if (
+			await screens.confirm(1, 2, 'FVAL cannot be run, headline rate not entered for Option')
+			|| await screens.confirm(1, 2, 'FVAL cannot be run, headline rate not VERIFIED for Option')
+		) {
+			const split = (await screens.getScreenTextTrimmed(1, 2, 72)).split(' ')
+			if (split[12].length < 8) return false
+
+			const date = `${split[12].substring(6, 8)}/${split[12].substring(4, 6)}/${split[12].substring(0, 4)}`
+			const list: InvestmentGroupTuple[] = [[investmentGroup, split[10], date]]
+
+			if (!await processFMDRIM(list)) return false
+			if (!await screens.gotoFmsScreen('FMFV', 'FIS460M1')) return false
+
+			await typeReportDestination(13, 2, 22, 'Report Destination')
+			await screens.typeAndEnter(9, 22, investmentGroup.padEnd(4, ' '))
+		}
+
+		if (await screens.confirm(2, 2, 'End of list')) await screens.setAction('ENTER')
+		if (await screens.confirm(11, 49, 'CLOSED')) return false
+		if (await screens.isProgramName('FIS460M2') && await screens.getScreenTextTrimmed(24, 50, 1) === '') await screens.setAction('ENTER')
+		if (await screens.confirm(2, 2, 'Unver. Applications exist')) return false
+
+		if (await screens.confirm(1, 2, 'Outstanding Applications exist')) {
+			const split = (await screens.getScreenText(1, 2, 79)).split(' ')
+			const listOfReferences = await getListOfReferences(investmentGroup, split[7])
+			for (const reference of listOfReferences) {
+				await processAccountPurchaseWithBanking(split[7], reference)
+			}
+		}
+
+		if (await screens.confirm(2, 2, 'Outstanding Apps exist')) {
+			const split = (await screens.getScreenText(2, 2, 79)).split(' ')
+			await processAccountPurchaseWithBanking(split[7], split[8])
+		}
+
+		if (await screens.confirm(2, 11, 'Pending Adjustments exist')) return false
+
+		if (await screens.confirm(23, 20, 'Please Confirm')) {
+			const dateTimeNow = await screens.pleaseConfirm('Y')
+			await screens.waitForScreen('FIS460M1')
+			if (
+				await screens.confirm(2, 31, 'FMFV has been submitted for processing')
+				|| await screens.confirm(2, 32, 'FMFV has been submitted for processing')
+			) {
+				return isRunningJobCompleted(await screens.getScreenTextTrimmed(2, 8, 8), investmentGroup, dateTimeNow)
+			}
+			return false
+		}
+
+		if (await screens.confirm(1, 2, 'Rates  Has not Been Verified')) return false
+		if (await screens.confirm(1, 2, 'Distribution of') && await screens.confirm(1, 27, 'must be RUN between FVAL')) return false
+	}
+}
+
 export async function processFMITIH(fundValDate: Date): Promise<boolean> {
-	if (isJobAlreadySuccessful('FMITIH')) return true
+	if (await isJobAlreadySuccessful('FMITIH')) return true
 	if (!await screens.gotoFmsScreen('FMITIH', 'FIS757M1')) return false
 
 	await screens.typeAndEnter(21, 7, 'Report Destination')
@@ -85,7 +542,7 @@ export async function processFMITIH(fundValDate: Date): Promise<boolean> {
 }
 
 export async function processFMDIH(_fundValDate: Date): Promise<boolean> {
-	if (isJobAlreadySuccessful('FMDIH')) return true
+	if (await isJobAlreadySuccessful('FMDIH')) return true
 	if (!await screens.gotoFmsScreen('FMDIH', 'FIS749M1')) return false
 
 	await screens.typeAndEnter(19, 2, 'Report Destination')
@@ -101,7 +558,7 @@ export async function processFMDIH(_fundValDate: Date): Promise<boolean> {
 }
 
 export async function processFMATI(): Promise<boolean> {
-	if (isJobAlreadySuccessful('FMATI')) return true
+	if (await isJobAlreadySuccessful('FMATI')) return true
 	if (!await screens.gotoFmsScreen('FMATI', 'FIS753M1')) return false
 
 	await screens.typeAndEnter(19, 2, 'Report Destination')
@@ -116,7 +573,7 @@ export async function processFMATI(): Promise<boolean> {
 
 export async function processFMHAI(): Promise<boolean> {
 	const timeout = Date.now() + 60_000
-	if (isJobAlreadySuccessful('FMHAI')) return true
+	if (await isJobAlreadySuccessful('FMHAI')) return true
 	if (!await screens.gotoFmsScreen('FMHAI', 'FIS753M2')) return false
 
 	await screens.typeAndEnter(19, 2, 'Report Destination')
@@ -193,7 +650,7 @@ async function typeReportDestination(row: number, firstColumn: number, secondCol
 }
 
 export async function processFMTUE(fundValDate: Date): Promise<boolean> {
-	if (isJobAlreadySuccessful('FMTUE')) return true
+	if (await isJobAlreadySuccessful('FMTUE')) return true
 
 	while (true) {
 		if (!await screens.gotoFmsScreen('FMTUE', 'FIS751M1')) return false
@@ -209,7 +666,7 @@ export async function processFMTUE(fundValDate: Date): Promise<boolean> {
 
 		const submittedAt = await screens.pleaseConfirm('Y')
 		if (!await screens.confirm(2, 31, 'FMTUE has been submitted for processing')) return false
-		if (!isJobCompleted(await screens.getScreenTextTrimmed(2, 8, 8), submittedAt)) return false
+		if (!await isJobCompleted(await screens.getScreenTextTrimmed(2, 8, 8), submittedAt)) return false
 	}
 }
 
@@ -354,7 +811,7 @@ export async function processFMCIA(investmentGroup: string, fundValDate: Date): 
 		const submittedAt = await screens.pleaseConfirm('Y')
 		if (!await screens.confirm(2, 31, 'FMCIA has been submitted for processing')) return false
 
-		if (!isJobCompleted(await screens.getScreenTextTrimmed(2, 8, 8), submittedAt)) return false
+		if (!await isJobCompleted(await screens.getScreenTextTrimmed(2, 8, 8), submittedAt)) return false
 	}
 }
 
@@ -864,7 +1321,11 @@ export async function processFMMFD(_investmentGroup: string, _fundValDate: Date)
 	if (jobNames.length === 0) jobNames = status.split(/\s+/).filter((item) => item.toUpperCase().startsWith('FM'))
 	if (jobNames.length === 0) return false
 
-	return jobNames.every((jobName) => isJobCompleted(jobName, submittedAt))
+	for (const jobName of jobNames) {
+		if (!await isJobCompleted(jobName, submittedAt)) return false
+	}
+
+	return true
 }
 
 export async function processFMCFP(_fundValDate: Date): Promise<boolean> {
@@ -1158,12 +1619,79 @@ export async function processFMDP(investmentGroup: string, fundValDate: Date): P
 	return false
 }
 
-function isJobAlreadySuccessful(_processName: string): boolean {
+function delay(milliseconds: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, milliseconds))
+}
+
+async function isJobAlreadyCompleted(_jobName: string): Promise<boolean> {
 	return false
 }
 
-function isJobCompleted(_jobName: string, _submittedAt: Date): boolean {
-	return false
+async function isJobAlreadySuccessful(jobName: string): Promise<boolean> {
+	if (!await screens.gotoFmsScreen('FMJC', 'FMS945M1')) return false
+
+	await screens.setAction('PF10')
+	await screens.waitForScreen('FMS945M1')
+	await screens.type(16, 25, jobName.padEnd(8, ' '))
+	await screens.typeAndEnter(8, 8, 'S')
+
+	if (await screens.confirm(2, 2, 'No Jobs found belonging to')) return false
+
+	return isJobAlreadyCompleted(jobName)
+}
+
+async function isJobCompleted(jobName: string, dateTimeNow: Date): Promise<boolean> {
+	return isRunningJobCompleted(jobName, '', dateTimeNow)
+}
+
+async function findJobRow(_jobName: string, _investmentGroup: string, _dateTime: Date): Promise<number> {
+	return 0
+}
+
+async function jobCompleted(jobName: string, investmentGroup: string, dateTime: Date): Promise<string> {
+	while (await screens.isProgramName('FMS946M2') && await screens.getScreenTextTrimmed(24, 44, 1) !== '') {
+		await screens.setAction('PF7')
+	}
+
+	const row = await findJobRow(jobName.trim().toUpperCase(), investmentGroup, dateTime)
+	if (row > 0) return await screens.getScreenTextTrimmed(row, 25, 11)
+
+	const fallbackRow = await findJobRow(jobName.replace('FM', 'FB').trim().toUpperCase(), investmentGroup, dateTime)
+	if (fallbackRow > 0) return await screens.getScreenTextTrimmed(fallbackRow, 25, 11)
+
+	return 'Completed'
+}
+
+export async function isRunningJobCompleted(jobName: string, investmentGroup: string, dateTimeNow: Date): Promise<boolean> {
+	const timeout = Date.now() + 10 * 60_000
+
+	if (!await screens.gotoFmsScreen('FMJC', 'FMS945M1')) return false
+
+	await screens.setAction('PF10')
+
+	if (dateTimeNow.getTime() !== new Date(1899, 11, 30).getTime()) {
+		await screens.typeTime(12, 41, 46, new Date(Date.now() - 60_000))
+		await screens.typeTime(13, 41, 46, new Date(Date.now() + 60_000))
+	}
+
+	if (!await screens.confirm(16, 25, '       ')) await screens.clearScreenText(16, 25, 8)
+	await screens.typeAndEnter(7, 8, 'S')
+
+	let completed = ''
+	while (completed === '' || completed === 'Start Run' || completed === 'Submitted') {
+		completed = await jobCompleted(jobName, investmentGroup, dateTimeNow)
+
+		if (completed !== 'Completed') {
+			if (Date.now() < timeout) {
+				await delay(500)
+				await screens.enter()
+			} else {
+				return false
+			}
+		}
+	}
+
+	return completed === 'Completed'
 }
 
 async function getFileNumber(environment: string, fundValDate: Date): Promise<number> {
@@ -1209,7 +1737,7 @@ export async function processFMDC(environment: string, companyName: string, fund
 		return true
 	}
 
-	if (isJobAlreadySuccessful('FMDC')) return true
+	if (await isJobAlreadySuccessful('FMDC')) return true
 	if (!await screens.gotoFmsScreen('FMDC', 'FIS747M1')) return false
 	if (await screens.confirm(2, 2, 'No file with input status is found in the last')) return true
 

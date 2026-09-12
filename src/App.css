@@ -267,6 +267,18 @@
   padding: 10px;
 }
 
+.process-summary-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 24px;
+  margin-bottom: 10px;
+  padding: 6px 8px;
+  border: 1px solid #c5c5c5;
+  background: #f8f8f8;
+  color: #333;
+  font-size: 12px;
+}
+
 .rich-text-box {
   box-sizing: border-box;
   width: 100%;
@@ -312,6 +324,17 @@
 .process-grid-button.hidden-investment-group {
   visibility: hidden;
   pointer-events: none;
+}
+
+.process-grid-button.process-result-success {
+  border-color: #75ae69;
+  background: #b9e6b0;
+}
+
+.process-grid-button.process-result-failure {
+  border-color: #a11d1d;
+  background: #e02424;
+  color: #fff;
 }
 
 @media (max-width: 720px) {

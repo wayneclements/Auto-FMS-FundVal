@@ -53,6 +53,26 @@ function nextFundValDate(type?: FundValType) {
   return nextDate.toISOString().slice(0, 10)
 }
 
+function formatIsoToDisplay(iso: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
+  if (!match) return iso
+  const [, year, month, day] = match
+  return `${day}/${month}/${year}`
+}
+
+function parseDisplayToIso(display: string): string {
+  const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(display.trim())
+  if (!match) return ''
+
+  const day = Number(match[1])
+  const month = Number(match[2])
+  const year = Number(match[3])
+  const date = new Date(year, month - 1, day)
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return ''
+
+  return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+}
+
 function readOnlyReason(type: FundValType | undefined, selectedDate: string) {
   if (!type || !selectedDate) return 'Selections are incomplete.'
   if (!type.lastFundValDate || !type.lastTotalUnitsExtractRunDate) return ''
@@ -86,7 +106,8 @@ function App() {
   const [companyName, setCompanyName] = useState('')
   const [fundValTypeName, setFundValTypeName] = useState('')
   const [environment, setEnvironment] = useState<Environment | ''>('')
-  const [fundValDate, setFundValDate] = useState('')
+  const [fundValDate, setFundValDateIso] = useState('')
+  const [fundValDateText, setFundValDateText] = useState('')
   const [fmsConnected, setFmsConnected] = useState(false)
   const [databaseConnected, setDatabaseConnected] = useState(false)
   const [status, setStatus] = useState('Loading run sheets')
@@ -94,7 +115,18 @@ function App() {
   const [showProcessForm, setShowProcessForm] = useState(false)
   const [showRunsheetEditor, setShowRunsheetEditor] = useState(false)
   const [processes, setProcesses] = useState<Process[]>([])
+  const [processResults, setProcessResults] = useState<Record<string, boolean>>({})
   const processFormRef = useRef<HTMLElement>(null)
+
+  function setFundValDate(iso: string) {
+    setFundValDateIso(iso)
+    setFundValDateText(formatIsoToDisplay(iso))
+  }
+
+  function handleFundValDateTextChange(value: string) {
+    setFundValDateText(value)
+    setFundValDateIso(parseDisplayToIso(value))
+  }
 
   const selectedType = fundValTypes.find((type) => type.fundValType === fundValTypeName)
   const readOnlyMessage = readOnlyReason(selectedType, fundValDate)
@@ -242,65 +274,179 @@ function App() {
     setShowProcessForm(true)
   }
 
-  async function handleProcessButtonClick(processName: string, company: string, investmentGroups: processModule.ProcessInvestmentGroup[], fundValDate: Date) 
-  {
+  async function handleProcessButtonClick(processName: string, company: string, investmentGroups: processModule.ProcessInvestmentGroup[], fundValDate: Date) {
     setError('')
     try {
+      let result: boolean = false;
       switch (processName.toUpperCase()) {
-        case "FMSD": return processModule.processFMSDbutton(environment, company, investmentGroups, fundValDate);
-        case "FMPPFR": return processModule.processFMPPFRbutton(environment, company, investmentGroups, fundValDate);
-        case "FMPPP": return processModule.processFMPPPbutton(environment, company, investmentGroups, fundValDate);
-        case "FMPIV": return processModule.processFMPIVbutton(environment, company, investmentGroups, fundValDate);
-        case "FMFVRM": return processModule.processFMFVRMbutton(environment, company, investmentGroups, fundValDate);
-        case "FMPFV": return processModule.processFMPFVbutton(environment, company, investmentGroups, fundValDate);
-        case "FMFV": return processModule.processFMFVbutton(environment, company, investmentGroups, fundValDate);
-        case "FMBAL": return processModule.processFMBALbutton(environment, company, investmentGroups, fundValDate);
-        case "FMBALAN": return processModule.processFMBALbutton(environment, company, investmentGroups, fundValDate);
-        case "FMPI": return processModule.processFMPIbutton(environment, company, investmentGroups, fundValDate);
-        case "FMPRD": return processModule.processFMPRDbutton(environment, company, investmentGroups, fundValDate);
-        case "FMPID": return processModule.processFMPIDbutton(environment, company, investmentGroups, fundValDate);
-        case "FMPPPD": return processModule.processFMPPPDbutton(environment, company, investmentGroups, fundValDate);
-        case "FMDC": return processModule.processFMDCbutton(environment, company, investmentGroups, fundValDate);
-        case "FMITIH": return processModule.processFMITIHbutton(environment, company, investmentGroups, fundValDate);
-        case "FMDIH": return processModule.processFMDIHbutton(environment, company, investmentGroups, fundValDate);
-        case "FMATI": return processModule.processFMATIbutton(environment, company, investmentGroups, fundValDate);
-        case "FMHAI": return processModule.processFMHAIbutton(environment, company, investmentGroups, fundValDate);
-        case "FMCP": return processModule.processFMCPbutton(environment, company, investmentGroups, fundValDate);
-        case "FMTUE": return processModule.processFMTUEbutton(environment, company, investmentGroups, fundValDate);
-        case "FMDRM": return processModule.processFMDRMbutton(environment, company, investmentGroups, fundValDate);
-        case "FMCIA": return processModule.processFMCIAbutton(environment, company, investmentGroups, fundValDate);
-        case "FMDP": return processModule.processFMDPbutton(environment, company, investmentGroups, fundValDate);
-        case "FMBS": return processModule.processFMBSbutton(environment, company, investmentGroups, fundValDate);
-        case "FMPRPC": return processModule.processFMPRPCbutton(environment, company, investmentGroups, fundValDate);
-        case "FMFCPS": return processModule.processFMFCPSbutton(environment, company, investmentGroups, fundValDate);
-        case "FMRBFSR": return processModule.processFMRBFSRbutton(environment, company, investmentGroups, fundValDate);
-        case "FMPSM": return processModule.processFMPSMbutton(environment, company, investmentGroups, fundValDate);
-        case "FMPDDD": return processModule.processFMPDDDbutton(environment, company, investmentGroups, fundValDate);
-        case "FMAR": return processModule.processFMARbutton(environment, company, investmentGroups, fundValDate);
-        case "FMTCFP": return processModule.processFMTCFPbutton(environment, company, investmentGroups, fundValDate);
-        case "FMPIF": return processModule.processFMPIFbutton(environment, company, investmentGroups, fundValDate);
-        case "FMPMIP": return processModule.processFMPMIPbutton(environment, company, investmentGroups, fundValDate);
-        case "FMRBRR": return processModule.processFMRBRRbutton(environment, company, investmentGroups, fundValDate);
-        case "FMPRBMR": return processModule.processFMPRBMRbutton(environment, company, investmentGroups, fundValDate);
-        case "FMPDCD": return processModule.processFMPDCDbutton(environment, company, investmentGroups, fundValDate);
-        case "FMMFRP": return processModule.processFMMFRPbutton(environment, company, investmentGroups, fundValDate);
-        case "FMMFA": return processModule.processFMMFAbutton(environment, company, investmentGroups, fundValDate);
-        case "FMPASF": return processModule.processFMPASFbutton(environment, company, investmentGroups, fundValDate);
-        case "FMPPD": return processModule.processFMPPDbutton(environment, company, investmentGroups, fundValDate);
-        case "FMDIRM": return processModule.processFMDIRMbutton(environment, company, investmentGroups, fundValDate);
-        case "FMPCP": return processModule.processFMPCPbutton(environment, company, investmentGroups, fundValDate);
-        case "FMPSMREP": return processModule.processFMPSMREPbutton(environment, company, investmentGroups, fundValDate);
-        case "FMPFBBR": return processModule.processFMPFBBRbutton(environment, company, investmentGroups, fundValDate);
-        case "FMPMIPD": return processModule.processFMPMIPDbutton(environment, company, investmentGroups, fundValDate);
-        case "FMSWG": return processModule.processFMSWGbutton(environment, company, investmentGroups, fundValDate);
-        case "FMPMFI": return processModule.processFMPMFIbutton(environment, company, investmentGroups, fundValDate);
-        case "FMCFP": return processModule.processFMCFPbutton(environment, company, investmentGroups, fundValDate);
-        case "FMMFD": return processModule.processFMMFDbutton(environment, company, investmentGroups, fundValDate);
-        case "FMPDD": return processModule.processFMPDDbutton(environment, company, investmentGroups, fundValDate);
-        case "FMAPTP": return processModule.processFMAPTPbutton(environment, company, investmentGroups, fundValDate);
-        case "FMEOYFG": return processModule.processFMEOYFGbutton(environment, company, investmentGroups, fundValDate);
-        case "FMEOYP": return processModule.processFMEOYPbutton(environment, company, investmentGroups, fundValDate);
-        case "FMAPEOYP": return processModule.processFMAPEOYPbutton(environment, company, investmentGroups, fundValDate);
+        case "FMSD":
+          result = await processModule.processFMSDbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMPPFR":
+          result = await processModule.processFMPPFRbutton(environment, company, investmentGroups, fundValDate); break;
+          break;
+        case "FMPPP":
+          result = await processModule.processFMPPPbutton(environment, company, investmentGroups, fundValDate); break;
+          break;
+        case "FMPIV":
+          result = await processModule.processFMPIVbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMFVRM":
+          result = await processModule.processFMFVRMbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMPFV":
+          result = await processModule.processFMPFVbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMFV":
+          result = await processModule.processFMFVbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMBAL":
+          result = await processModule.processFMBALbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMBALAN":
+          result = await processModule.processFMBALbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMPI":
+          result = await processModule.processFMPIbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMPRD":
+          result = await processModule.processFMPRDbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMPID":
+          result = await processModule.processFMPIDbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMPPPD":
+          result = await processModule.processFMPPPDbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMDC":
+          result = await processModule.processFMDCbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMITIH":
+          result = await processModule.processFMITIHbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMDIH":
+          result = await processModule.processFMDIHbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMATI":
+          result = await processModule.processFMATIbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMHAI":
+          result = await processModule.processFMHAIbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMCP":
+          result = await processModule.processFMCPbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMTUE":
+          result = await processModule.processFMTUEbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMDRM":
+          result = await processModule.processFMDRMbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMCIA":
+          result = await processModule.processFMCIAbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMDP":
+          result = await processModule.processFMDPbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMBS":
+          result = await processModule.processFMBSbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMPRPC":
+          result = await processModule.processFMPRPCbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMFCPS":
+          result = await processModule.processFMFCPSbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMRBFSR":
+          result = await processModule.processFMRBFSRbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMPSM":
+          result = await processModule.processFMPSMbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMPDDD":
+          result = await processModule.processFMPDDDbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMAR":
+          result = await processModule.processFMARbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMTCFP":
+          result = await processModule.processFMTCFPbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMPIF":
+          result = await processModule.processFMPIFbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMPMIP":
+          result = await processModule.processFMPMIPbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMRBRR":
+          result = await processModule.processFMRBRRbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMPRBMR":
+          result = await processModule.processFMPRBMRbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMPDCD":
+          result = await processModule.processFMPDCDbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMMFRP":
+          result = await processModule.processFMMFRPbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMMFA":
+          result = await processModule.processFMMFAbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMPASF":
+          result = await processModule.processFMPASFbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMPPD":
+          result = await processModule.processFMPPDbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMDIRM":
+          result = await processModule.processFMDIRMbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMPCP":
+          result = await processModule.processFMPCPbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMPSMREP":
+          result = await processModule.processFMPSMREPbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMPFBBR":
+          result = await processModule.processFMPFBBRbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMPMIPD":
+          result = await processModule.processFMPMIPDbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMSWG":
+          result = await processModule.processFMSWGbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMPMFI":
+          result = await processModule.processFMPMFIbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMCFP":
+          result = await processModule.processFMCFPbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMMFD":
+          result = await processModule.processFMMFDbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMPDD":
+          result = await processModule.processFMPDDbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMAPTP":
+          result = await processModule.processFMAPTPbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMEOYFG":
+          result = await processModule.processFMEOYFGbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMEOYP": result = await processModule.processFMEOYPbutton(environment, company, investmentGroups, fundValDate);
+          break;
+        case "FMAPEOYP":
+          result = await processModule.processFMAPEOYPbutton(environment, company, investmentGroups, fundValDate);
+          break;
+      }
+      if (result) {
+        setStatus(`Process completed successfully: ${result}`)
+        setProcessResults((previous) => ({ ...previous, [processName]: true }))
+      } else {
+        setStatus('Process did not return a result')
+        setProcessResults((previous) => ({ ...previous, [processName]: false }))
       }
     } catch (currentError: unknown) {
       setError(currentError instanceof Error ? currentError.message : `Could not run ${processName}.`)
@@ -443,7 +589,7 @@ function App() {
 
             <div className="form-row date-row">
               <label htmlFor="fund-val-date">Fund Valuation Date</label>
-              <input id="fund-val-date" type="text" value={fundValDate} onChange={(event) => setFundValDate(event.target.value)} disabled={!selectedType} />
+              <input id="fund-val-date" type="text" placeholder="DD/MM/YYYY" value={fundValDateText} onChange={(event) => handleFundValDateTextChange(event.target.value)} disabled={!selectedType} />
               <button type="button" className="tiny-button" disabled={!selectedType}>...</button>
               <input type="text" value={fundValDate ? new Date(fundValDate).toLocaleDateString(undefined, { weekday: 'long' }) : ''} readOnly disabled />
             </div>
@@ -477,6 +623,12 @@ function App() {
         <section ref={processFormRef} className="process-window" aria-labelledby="process-details-heading">
           <h2 id="process-details-heading">Process Details</h2>
           <form className="process-form">
+            <div className="process-summary-row">
+              <span><strong>Environment:</strong> {environment}</span>
+              <span><strong>Company:</strong> {companyName}</span>
+              <span><strong>Fund Valuation Date:</strong> {fundValDateText}</span>
+              <span><strong>FundVal Type:</strong> {fundValTypeName}</span>
+            </div>
             <div
               className="rich-text-box"
               contentEditable
@@ -490,14 +642,13 @@ function App() {
                 Array.from({ length: 10 }, (_, column) => {
                   const investmentGroup = column > 0 ? process.investmentGroups[column - 1] : undefined
                   const label = column === 0 ? process.name : investmentGroup?.name
-                  const className = investmentGroup?.state
-                    ? 'process-grid-button active-investment-group'
-                    : column > 0
-                      ? 'process-grid-button hidden-investment-group'
-                      : 'process-grid-button'
+                  const processResult = column === 0 ? processResults[process.name] : undefined
+                  const className = [
+                    'process-grid-button',
+                    investmentGroup?.state ? 'active-investment-group' : column > 0 ? 'hidden-investment-group' : '',
+                    processResult === true ? 'process-result-success' : processResult === false ? 'process-result-failure' : '',
+                  ].filter(Boolean).join(' ')
 
-                  const company = '';
-                  
                   return (
                     <button
                       type="button"
@@ -505,7 +656,7 @@ function App() {
                       className={className}
                       title={column === 0 ? process.description : undefined}
                       disabled={!label || (column === 0 && !fundValDate)}
-                      onClick={column === 0 ? () => void handleProcessButtonClick(process.name, company, process.investmentGroups, fundValDate) : undefined}
+                      onClick={column === 0 ? () => void handleProcessButtonClick(process.name, companyName, process.investmentGroups, new Date(fundValDate)) : undefined}
                     >
                       {label ?? ''}
                     </button>
@@ -521,5 +672,4 @@ function App() {
 }
 
 export default App
-
 

@@ -1,12 +1,12 @@
 
 export async function gotoFmsScreen(screen: string, program: string): Promise<boolean> {
-    window.alert(`FMS screen requested: ${screen} (${program})`)
-    return false
+    console.log(`FMS screen requested: ${screen} (${program})`)
+    return true;
 }
 
 export async function gotoFMIGMscreen(): Promise<boolean> {
-    window.alert('FMIGM screen requested')
-    return false
+    console.log('FMIGM screen requested')
+    return true;
 }
 
 export async function gotoFMPDDDscreen(): Promise<boolean> {
@@ -34,28 +34,32 @@ export async function gotoFMMFDscreen(): Promise<boolean> {
 }
 
 export async function confirm(row: number, column: number, text: string): Promise<boolean> {
-    window.alert(`FMS confirmation requested at ${row},${column}: ${text}`)
-    return false
+    console.log(`FMS confirmation requested at ${row},${column}: ${text}`)
+    return true;
 }
 
 export async function typeAndEnter(row: number, column: number, text: string): Promise<void> {
-    window.alert(`FMS input at ${row},${column}: ${text}`)
+    console.log(`FMS input at ${row},${column}: ${text}`)
 }
 
 export async function type(row: number, column: number, text: string): Promise<void> {
-    window.alert(`FMS input at ${row},${column}: ${text}`)
+    console.log(`FMS input at ${row},${column}: ${text}`)
 }
 
 export async function typeAndEnterDate(row: number, dayColumn: number, monthColumn: number, yearColumn: number, date: Date): Promise<void> {
-    window.alert(`FMS date input at ${row},${dayColumn},${monthColumn},${yearColumn}: ${date.toISOString()}`)
+    console.log(`FMS date input at ${row},${dayColumn},${monthColumn},${yearColumn}: ${date.toISOString()}`)
 }
 
 export async function typeDate(row: number, dayColumn: number, monthColumn: number, yearColumn: number, date: Date): Promise<void> {
-    window.alert(`FMS date input at ${row},${dayColumn},${monthColumn},${yearColumn}: ${date.toISOString()}`)
+    console.log(`FMS date input at ${row},${dayColumn},${monthColumn},${yearColumn}: ${date.toISOString()}`)
 }
 
 export async function typeAndEnterTime(row: number, startColumn: number, endColumn: number, date: Date): Promise<void> {
-    window.alert(`FMS time input at ${row},${startColumn},${endColumn}: ${date.toISOString()}`)
+    console.log(`FMS time input at ${row},${startColumn},${endColumn}: ${date.toISOString()}`)
+}
+
+export async function typeTime(row: number, startColumn: number, endColumn: number, date: Date): Promise<void> {
+    console.log(`FMS time input at ${row},${startColumn},${endColumn}: ${date.toISOString()}`)
 }
 
 export type CursorPosition = {
@@ -64,20 +68,20 @@ export type CursorPosition = {
 }
 
 export async function getCursorPosition(): Promise<CursorPosition> {
-    window.alert('FMS cursor position requested')
+    console.log('FMS cursor position requested')
     return { row: 0, column: 0 }
 }
 
 export async function clearScreenText(row: number, column: number, length: number): Promise<void> {
-    window.alert(`FMS screen text cleared at ${row},${column} for ${length} characters`)
+    console.log(`FMS screen text cleared at ${row},${column} for ${length} characters`)
 }
 
 export async function enter(): Promise<void> {
-    window.alert('FMS enter requested')
+    console.log('FMS enter requested')
 }
 
 export async function isProtected(row: number, column: number, length: number): Promise<boolean> {
-    window.alert(`FMS protection status requested at ${row},${column} for ${length} characters`)
+    console.log(`FMS protection status requested at ${row},${column} for ${length} characters`)
     return true
 }
 
@@ -90,32 +94,37 @@ export async function getInteger(row: number, column: number, length: number): P
     return Number.isNaN(value) ? 0 : value
 }
 
-export async function isProgramName(program: string): Promise<boolean> {
-    window.alert(`FMS program name requested: ${program}`)
+export async function getDecimal(row: number, column: number, length: number): Promise<number> {
+    const value = Number.parseFloat(await getScreenTextTrimmed(row, column, length))
+    return Number.isNaN(value) ? 0 : value
+}
+
+export async function isProgramName(...programs: string[]): Promise<boolean> {
+    console.log(`FMS program name requested: ${programs.join(', ')}`)
     return false
 }
 
 export async function isPleaseConfirm(): Promise<boolean> {
-    window.alert('FMS please-confirm status requested')
+    console.log('FMS please-confirm status requested')
     return false
 }
 
-export async function waitForScreen(screen: string): Promise<boolean> {
-    window.alert(`FMS screen wait requested: ${screen}`)
+export async function waitForScreen(...screens: string[]): Promise<boolean> {
+    console.log(`FMS screen wait requested: ${screens.join(', ')}`)
     return false
 }
 
 export async function getScreenTextTrimmed(row: number, column: number, length: number): Promise<string> {
-    window.alert(`FMS screen text requested at ${row},${column} for ${length} characters`)
+    console.log(`FMS screen text requested at ${row},${column} for ${length} characters`)
     return ''
 }
 
 export async function setAction(action: string): Promise<void> {
-    window.alert(`FMS action requested: ${action}`)
+    console.log(`FMS action requested: ${action}`)
 }
 
 export async function pleaseConfirm(response: string): Promise<Date> {
-    window.alert(`FMS confirmation response: ${response}`)
+    console.log(`FMS confirmation response: ${response}`)
     return new Date()
 }
 
