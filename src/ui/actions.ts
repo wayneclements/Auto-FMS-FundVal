@@ -1,6 +1,8 @@
 import { writeToProcessingLog as writeProcessingLogEntry } from './database'
 import * as screens from './screens.ts'
 
+const timeoutSeconds = 60
+
 export async function writeToProcessingLog(environment: string, companyName: string, fundValDate: Date, text: string, ...list: string[]): Promise<void> {
 	const message = list.length > 0
 		? text.replace(/\{(\d+)\}/g, (placeholder, index: string) => list[Number(index)] ?? placeholder)
@@ -519,6 +521,168 @@ export async function processFMFV(investmentGroup: string): Promise<boolean> {
 		if (await screens.confirm(1, 2, 'Rates  Has not Been Verified')) return false
 		if (await screens.confirm(1, 2, 'Distribution of') && await screens.confirm(1, 27, 'must be RUN between FVAL')) return false
 	}
+}
+
+export async function processFMBAL(investmentGroup: string): Promise<boolean> {
+	if (!await screens.gotoFmsScreen('FMBALAN', 'FMS507M1')) return false
+
+	if (await screens.confirm(12, 9, 'Fix ABOTD')) await screens.type(12, 41, 'Y')
+	await typeReportDestination(21, 9, 41, 'Report Destination')
+	if (await screens.confirm(6, 9, 'Investment Group')) await screens.typeAndEnter(6, 28, investmentGroup.padStart(4, ' '))
+	if (await screens.confirm(8, 14, 'Invalid Printer ID')) await screens.typeAndEnter(12, 14, 'S')
+
+	const dateTimeNow = await screens.pleaseConfirm('Y')
+	await screens.waitForScreen('FMS507M1')
+	if (await screens.confirm(2, 31, 'FMBALAN has been submitted for processing')) {
+		return isRunningJobCompleted(await screens.getScreenTextTrimmed(2, 8, 8), investmentGroup, dateTimeNow)
+	}
+
+	return false
+}
+
+export async function processFMPI(fundValDate: Date, _systemDate: Date): Promise<boolean> {
+	if (fundValDate.getDay() === 0 || fundValDate.getDay() === 6) return false
+
+	if (await isJobAlreadySuccessful('FMPI')) return true
+	if (!await screens.gotoFmsScreen('FMPI', 'FIS697M1')) return false
+
+	await typeReportDestination(21, 3, 24, 'Report Destination')
+	if (await screens.confirm(2, 2, 'FMPI for this company should be run in Cpny - 001')) {
+		return screens.confirm(4, 2, '008')
+	}
+
+	if (await screens.confirm(8, 3, 'Effective Date')) {
+		await screens.typeDate(8, 23, 28, 33, new Date(fundValDate.getTime() + 24 * 60 * 60 * 1000))
+	}
+	if (await screens.confirm(7, 44, 'NZAUK')) await screens.typeDate(8, 40, 45, 50, fundValDate)
+
+	while (await screens.getScreenTextTrimmed(24, 50, 5) !== '') await screens.setAction('PF8')
+	if (!await screens.confirm(23, 20, 'Please Confirm')) await screens.enter()
+	if (await screens.confirm(16, 23, 'Pls confirm if OK')) await screens.setAction('ENTER')
+	if (await screens.confirm(1, 2, 'Date cannot be earlier than the Last FMPI Date for AUNSW')) return false
+
+	const dateTimeNow = await screens.pleaseConfirm('Y')
+	if (await screens.confirm(2, 31, 'FMPI has been submitted for processing')) {
+		return isJobCompleted(await screens.getScreenTextTrimmed(2, 8, 8), dateTimeNow)
+	}
+
+	return false
+}
+
+export async function processFMPRD(investmentGroup: string): Promise<boolean> {
+	if (!await screens.gotoFmsScreen('FMPRD', 'FMS260M1')) return false
+
+	await typeReportDestination(9, 2, 23, 'Report Destination')
+	await screens.typeAndEnter(6, 23, investmentGroup.padStart(4, ' '))
+	await screens.type(6, 72, 'Y')
+	await screens.type(12, 24, 'Y')
+	await screens.type(13, 24, 'Y')
+	await screens.type(14, 24, 'Y')
+	await screens.type(15, 24, 'Y')
+	await screens.type(16, 24, 'Y')
+	await screens.type(17, 24, 'Y')
+	await screens.type(18, 24, 'Y')
+	await screens.type(19, 24, 'Y')
+	await screens.type(21, 70, 'Y')
+	await screens.type(21, 29, 'Y')
+	await screens.type(21, 70, 'Y')
+	await screens.type(22, 29, 'Y')
+	await screens.enter()
+
+	const timeout = Date.now() + 10 * timeoutSeconds * 1000
+	while (Date.now() < timeout && !await screens.confirm(23, 20, 'Please Confirm')) {
+		if (await screens.confirm(1, 2, "Please enter 'Y' or 'N'")) {
+			const cursor = await screens.getCursorPosition()
+			await screens.typeAndEnter(cursor.row, cursor.column, 'Y')
+		}
+		if (await screens.confirm(1, 2, "Contribution Tax sweep is not required for this product. Please set to 'N'")) await screens.typeAndEnter(18, 24, 'N')
+		if (await screens.confirm(1, 2, 'This Product does not support Margin Lending')) await screens.typeAndEnter(19, 24, 'N')
+		if (await screens.confirm(1, 2, "'Process Choice Redemptions' cannot be 'Y'")) await screens.typeAndEnter(21, 70, 'N')
+		if (await screens.confirm(2, 2, 'No Redemption to DES requested')) await screens.typeAndEnter(6, 72, 'N')
+		if (await screens.confirm(1, 2, 'CGT can only be requested for a product family product')) await screens.typeAndEnter(16, 24, 'N')
+		if (await screens.confirm(1, 2, 'Adv Trail Rebate and Client Rebate are not eligible to the product')) await screens.typeAndEnter(21, 29, 'N')
+		if (await screens.confirm(1, 2, 'Management Fee Rebate does not apply to CF products')) await screens.typeAndEnter(22, 29, 'N')
+		if (await screens.confirm(2, 2, 'No Choice Redemption to DES requested')) await screens.typeAndEnter(21, 70, 'N')
+		if (await screens.confirm(1, 2, "All Fees already funded for this date. Set to 'N'")) await screens.typeAndEnter(15, 24, 'N')
+		if (await screens.confirm(1, 2, "Applications already funded for this date. Set to 'N'")) await screens.typeAndEnter(12, 24, 'N')
+		if (await screens.confirm(1, 2, 'Fees cannot be processed')) await screens.typeAndEnter(15, 24, 'N')
+		if (await screens.confirm(1, 2, 'Client Rebate DES processing has been run')) await screens.typeAndEnter(21, 29, 'N')
+		if (await screens.confirm(1, 2, "Redemptions already funded for this date. Set to 'N'")) await screens.typeAndEnter(13, 24, 'N')
+		if (await screens.confirm(1, 2, 'Margin Loan Funding has been processed up to last Fund Valuation')) await screens.typeAndEnter(19, 24, 'N')
+		if (await screens.confirm(1, 2, 'Product closed')) return false
+		if (await screens.confirm(1, 2, "FundVal DES not required for product. Please set to 'N'")) {
+			const cursor = await screens.getCursorPosition()
+			await screens.typeAndEnter(cursor.row, cursor.column, 'N')
+		}
+		if (await screens.confirm(1, 2, "Switches already funded for this date. Set to 'N'")) await screens.typeAndEnter(14, 24, 'N')
+		if (await screens.confirm(1, 2, "CGT already funded for this date. Set to 'N'")) await screens.typeAndEnter(16, 24, 'N')
+		if (await screens.confirm(1, 2, "Contribution Tax sweep has been processed for this date. Set to 'N'")) await screens.typeAndEnter(18, 24, 'N')
+		if (await screens.confirm(1, 2, "Adjustments already funded for this date. Set to 'N'")) await screens.typeAndEnter(17, 24, 'N')
+		if (await screens.confirm(2, 2, 'Unverified Redemption')) return false
+		if (await screens.confirm(1, 2, "Not an ARC product. All Fund Valuation fields must be 'N'")) {
+			const cursor = await screens.getCursorPosition()
+			await screens.typeAndEnter(cursor.row, cursor.column, 'N')
+		}
+		if (await screens.confirm(1, 2, 'Must select at least one job for submission')) return true
+	}
+
+	if (!await screens.isPleaseConfirm()) return false
+
+	const dateTimeNow = await screens.pleaseConfirm('Y')
+	const status = (await screens.getScreenTextTrimmed(2, 2, 78)).trim()
+
+	if (!status.startsWith('Jobs: ') && !status.startsWith('Job : ')) return false
+
+	let jobNames = status.split(' ').filter((item) => item.toUpperCase().startsWith('FB'))
+	if (jobNames.length === 0) {
+		jobNames = status.split(' ').filter((item) => item.toUpperCase().startsWith('FM'))
+	}
+
+	return isJobCompleted(jobNames, investmentGroup, dateTimeNow)
+}
+
+export async function processFMPID(): Promise<boolean> {
+	if (await isJobAlreadySuccessful('FMPID')) return true
+	if (!await screens.gotoFmsScreen('FMPID', 'FIS272M1')) return false
+
+	await screens.enter()
+	if (await screens.confirm(1, 2, 'NO INTERFUND FOUND FOR DES')) return true
+	if (!await screens.confirm(23, 20, 'Please Confirm')) return false
+
+	const dateTimeNow = await screens.pleaseConfirm('Y')
+	if (await screens.confirm(2, 31, 'FMPID has been submitted for processing')) {
+		return isJobCompleted(await screens.getScreenTextTrimmed(2, 8, 8), dateTimeNow)
+	}
+
+	return false
+}
+
+async function getPendingFVALBankBalancingReportRow(_fundValDate: Date): Promise<number> {
+	return 0
+}
+
+export async function processFMPFBBR(investmentGroup: string, fundValDate: Date): Promise<boolean> {
+	if (!await screens.gotoFmsScreen('FMPFBBR', 'FIG150M1')) return false
+
+	await typeReportDestination(20, 9, 30, 'Report Destination')
+	await screens.typeAndEnter(7, 30, investmentGroup.padStart(4, ' '))
+	await screens.waitForScreen('FIG150M1')
+
+	const row = await getPendingFVALBankBalancingReportRow(fundValDate)
+	if (row > 0) {
+		await screens.typeAndEnter(row, 21, 'S')
+	} else {
+		await screens.typeAndEnter(10, 21, 'A')
+	}
+
+	if (!await screens.confirm(23, 20, 'Please Confirm')) return false
+
+	const dateTimeNow = await screens.pleaseConfirm('Y')
+	if (await screens.confirm(2, 31, 'FMPFBBR has been submitted for processing')) {
+		return isJobCompleted(await screens.getScreenTextTrimmed(2, 8, 8), dateTimeNow)
+	}
+
+	return false
 }
 
 export async function processFMITIH(fundValDate: Date): Promise<boolean> {
@@ -1640,8 +1804,19 @@ async function isJobAlreadySuccessful(jobName: string): Promise<boolean> {
 	return isJobAlreadyCompleted(jobName)
 }
 
-async function isJobCompleted(jobName: string, dateTimeNow: Date): Promise<boolean> {
-	return isRunningJobCompleted(jobName, '', dateTimeNow)
+async function isJobCompleted(jobName: string, dateTimeNow: Date): Promise<boolean>
+async function isJobCompleted(jobNames: string[], investmentGroup: string, dateTimeNow: Date): Promise<boolean>
+async function isJobCompleted(jobNameOrNames: string | string[], investmentGroupOrDateTimeNow: string | Date, dateTimeNow?: Date): Promise<boolean> {
+	if (typeof jobNameOrNames === 'string') {
+		return isRunningJobCompleted(jobNameOrNames, '', investmentGroupOrDateTimeNow as Date)
+	}
+
+	const investmentGroup = investmentGroupOrDateTimeNow as string
+	for (const jobName of jobNameOrNames) {
+		if (!await isRunningJobCompleted(jobName, investmentGroup, dateTimeNow as Date)) return false
+	}
+
+	return true
 }
 
 async function findJobRow(_jobName: string, _investmentGroup: string, _dateTime: Date): Promise<number> {
