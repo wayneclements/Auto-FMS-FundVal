@@ -657,7 +657,15 @@ export async function processFMPID(): Promise<boolean> {
 	return false
 }
 
-async function getPendingFVALBankBalancingReportRow(_fundValDate: Date): Promise<number> {
+async function getPendingFVALBankBalancingReportRow(fundValDate: Date): Promise<number> {
+	const firstRow = 10
+	const lastRow = 18
+
+	for (let row = firstRow; row <= lastRow; row++) {
+		const date = await screens.getScreenDate(row, 30, 33, 36)
+		if (date.getTime() === fundValDate.getTime()) return row
+	}
+
 	return 0
 }
 

@@ -8,7 +8,7 @@ A TypeScript, React, and Postgres version of the original C# WinForms fund valua
 - Fund Valuation Date on the main form is entered and displayed in `DD/MM/YYYY` format.
 - A Process Details panel (opened via the NEXT button) summarizes the selected environment, company, Fund Valuation date, and FundVal type, and exposes the process/investment-group button grid.
 - Process buttons turn light green on a successful run and red when the process fails or returns no result.
-- An FMS terminal-automation layer (`src/ui/screens.ts`, `src/ui/actions.ts`, `src/ui/process.ts`) that ports the original C# WinForms process handlers (e.g. `processFMSD`, `processFMFVRM`, `processFMFV`) screen-by-screen. Handlers not yet ported from the C# source remain as placeholder stubs.
+- An FMS terminal-automation layer (`src/ui/screens.ts`, `src/ui/actions.ts`, `src/ui/process.ts`) that incrementally ports the original C# WinForms process handlers (e.g. `processFMSD`, `processFMFVRM`, `processFMFV`, `processFMBAL`, `processFMPI`, `processFMPRD`, `processFMPID`, `processFMPFBBR`) screen-by-screen. Handlers not yet ported from the C# source remain as placeholder stubs.
 - Express TypeScript API under `server/`.
 - Postgres schema, migration, and seed scripts under `database/`.
 - Vite proxy from `/api` to the local API server on port `5174`.
