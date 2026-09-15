@@ -1474,11 +1474,6 @@ export async function processFMPMFI(_fundValDate: Date): Promise<boolean> {
 	return isJobCompleted(await screens.getScreenTextTrimmed(2, 8, 8), submittedAt)
 }
 
-export async function getSystemDate(): Promise<Date> {
-	if (!await screens.gotoFmsScreen('FMSD', 'FIS953M1')) return new Date(1899, 11, 30)
-	return screens.getScreenDate(6, 40, 43, 46)
-}
-
 export async function processFMMFD(_investmentGroup: string, _fundValDate: Date): Promise<boolean> {
 	if (!await screens.gotoFMMFDscreen()) return false
 
@@ -1898,17 +1893,6 @@ async function getFileNumber(environment: string, fundValDate: Date): Promise<nu
 		}
 
 		if ((await screens.getScreenText(24, 50, 1)).trim() === '') return fileNumber
-		await screens.setAction('PF8')
-	}
-}
-
-export async function getDESJobControlRow(): Promise<number> {
-	while (true) {
-		for (let row = 10; row <= 21; row += 2) {
-			if (await screens.getScreenTextTrimmed(row, 4, 8) !== '') return row
-		}
-
-		if (await screens.getScreenTextTrimmed(24, 50, 1) === '') return 0
 		await screens.setAction('PF8')
 	}
 }

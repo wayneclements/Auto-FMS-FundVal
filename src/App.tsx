@@ -283,10 +283,10 @@ function App() {
           result = await processModule.processFMSDbutton(environment, company, investmentGroups, fundValDate);
           break;
         case "FMPPFR":
-          result = await processModule.processFMPPFRbutton(environment, company, investmentGroups, fundValDate); break;
+          result = await processModule.processFMPPFRbutton(environment, company, investmentGroups, fundValDate);
           break;
         case "FMPPP":
-          result = await processModule.processFMPPPbutton(environment, company, investmentGroups, fundValDate); break;
+          result = await processModule.processFMPPPbutton(environment, company, investmentGroups, fundValDate);
           break;
         case "FMPIV":
           result = await processModule.processFMPIVbutton(environment, company, investmentGroups, fundValDate);
