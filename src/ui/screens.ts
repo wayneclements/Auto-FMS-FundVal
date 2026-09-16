@@ -1,7 +1,155 @@
 
-export async function gotoFmsScreen(screen: string, program: string): Promise<boolean> {
-    console.log(`FMS screen requested: ${screen} (${program})`)
-    return true;
+// Modelled on the legacy `GotoFmsScreen(string screenName, params string[] list)` overload:
+// logs into/confirms the FMS session, navigates to the requested screen, then waits for one of
+// the expected program names to appear. Returns true once the screen shows an expected program.
+export async function gotoFmsScreen(screenName: string, ...programs: string[]): Promise<boolean> {
+    await waitForIdle(0)
+
+    if (await confirm(3, 2, 'F9=Production(ACTIVE),F4=Development(ACTIVE)')) {
+        await setAction('PF4')
+    }
+
+    if (await confirm(1, 2, 'Enter your userid and password')) {
+        throw new Error('FMS is not logged in, please login and try again')
+    }
+
+    if (await confirm(1, 2, 'E#30 Userid is blank or nulls, please enter a userid')) {
+        throw new Error('FMS is not logged in, please login and try again')
+    }
+
+    if (await confirm(13, 28, "Press 'Enter' to continue")) {
+        await enter()
+    }
+
+    if (await confirm(20, 9, 'Product Default')) {
+        await clearScreenText(20, 29, 4)
+    }
+
+    if (await confirm(23, 20, 'Please Confirm') && !(await isProtected(23, 36, 1))) {
+        await typeAndEnter(23, 36, 'N')
+    }
+
+    await gotoFmsScreenByName(screenName)
+
+    if (await confirm(12, 19, 'Do you want to run the Live version')) {
+        await typeAndEnter(12, 62, 'Y')
+    }
+
+    for (const programName of programs) {
+        if (programName !== '') {
+            await waitForScreen(programName)
+        }
+
+        if ((await getScreenText(3, 2, programName.length)).trim() === programName) {
+            return true
+        }
+    }
+
+    return false
+}
+
+export async function waitForIdle(milliseconds: number): Promise<void> {
+    console.log(`FMS wait for idle requested: ${milliseconds}ms`)
+}
+
+export async function getFullScreenText(): Promise<string> {
+    console.log('FMS full screen text requested')
+    return ''
+}
+
+// Modelled on the legacy `GotoFmsScreen(string screenName)` overload: navigates from wherever
+// the terminal currently is to the command/menu screen, then types the requested screen name
+// into the "Next Function" field and waits for it to load, retrying on transient system errors.
+export async function gotoFmsScreenByName(screenName: string, environmentCode: string = ''): Promise<string> {
+    let screenText = await getFullScreenText()
+
+    while (!screenText.includes('Command') && !screenText.includes('Next Function')) {
+        if (await confirm(23, 20, 'Please Confirm') && !(await isProtected(23, 36, 1))) {
+            await typeAndEnter(23, 36, 'N')
+        }
+
+        await setAction('PF12')
+
+        if (await confirm(2, 2, 'FIS351M1 0044 NAT1701 Non-activity time limit exceeded; press ENTER')) {
+            await setAction('ENTER')
+        }
+
+        if (await confirm(23, 20, 'Please Confirm')) {
+            await typeAndEnter(23, 36, 'N')
+        }
+
+        if (await confirm(20, 10, 'Selection')) {
+            await typeAndEnter(20, 22, environmentCode)
+            break
+        }
+
+        if (await confirm(2, 2, 'Press a PF key to select an application')) {
+            await setAction('PF4')
+        }
+
+        if (await confirm(8, 18, 'Selected product not used on this account')) {
+            await setAction('PF3')
+        }
+
+        if (await confirm(1, 2, 'FIS349M1 0048 NAT1011 Requested function key not allocated')) {
+            await setAction('ENTER')
+        }
+
+        if (await confirm(13, 28, "Press 'Enter' to continue")) {
+            await setAction('ENTER')
+        }
+
+        if (await confirm(13, 15, 'Please Confirm')) {
+            await typeAndEnter(13, 32, 'Y')
+        }
+
+        if (await confirm(11, 4, 'Please Confirm')) {
+            await typeAndEnter(11, 21, 'N')
+        }
+
+        await setAction('PF3')
+
+        screenText = await getFullScreenText()
+    }
+
+    let attempt = 0
+    while (true) {
+        attempt += 1
+
+        if (await confirm(11, 4, 'Please Confirm')) {
+            await typeAndEnter(11, 21, 'N')
+        }
+
+        while (!(await confirm(20, 2, 'Command'))) {
+            await setAction('PF12')
+
+            const error = (await getScreenText(1, 2, 79)).trim()
+            if (error.includes('function key not allocated')) {
+                await setAction('PF3')
+            }
+
+            if (await confirm(3, 4, 'This Investment Option is not Nil Entry Fee Product')) {
+                await setAction('PF3')
+            }
+
+            if (await confirm(1, 24, 'Requested function key not allocated')) {
+                await enter()
+            }
+        }
+
+        await typeAndEnter(20, 12, screenName)
+        await waitForIdle(0)
+
+        if (await confirm(10, 26, 'A System Error has been detected')) {
+            if (attempt < 3) {
+                await setAction('PF12')
+                continue
+            }
+            return getScreenTextTrimmed(3, 2, 8)
+        }
+
+        return getScreenTextTrimmed(3, 2, 8)
+    }
 }
 
 export async function gotoFMIGMscreen(): Promise<boolean> {
@@ -86,7 +234,8 @@ export async function isProtected(row: number, column: number, length: number): 
 }
 
 export async function getScreenText(row: number, column: number, length: number): Promise<string> {
-    return getScreenTextTrimmed(row, column, length)
+    console.log(`FMS screen text requested at ${row},${column} for ${length} characters`)
+    return ''
 }
 
 export async function getInteger(row: number, column: number, length: number): Promise<number> {
@@ -115,17 +264,41 @@ export async function waitForScreen(...screens: string[]): Promise<boolean> {
 }
 
 export async function getScreenTextTrimmed(row: number, column: number, length: number): Promise<string> {
-    console.log(`FMS screen text requested at ${row},${column} for ${length} characters`)
-    return ''
+    const text = await getScreenText(row, column, length)
+    return text.trim().replace(/_/g, '')
 }
 
 export async function setAction(action: string): Promise<void> {
     console.log(`FMS action requested: ${action}`)
 }
 
+export async function getScreenTime(row: number, hourColumn: number, minuteColumn: number, secondColumn: number): Promise<Date> {
+    const hour = Number.parseInt(await getScreenTextTrimmed(row, hourColumn, 2), 10)
+    const minute = Number.parseInt(await getScreenTextTrimmed(row, minuteColumn, 2), 10)
+    const second = Number.parseInt(await getScreenTextTrimmed(row, secondColumn, 2), 10)
+
+    const screenTime = new Date()
+    screenTime.setHours(hour, minute, second, 0)
+
+    return screenTime
+}
+
 export async function pleaseConfirm(response: string): Promise<Date> {
-    console.log(`FMS confirmation response: ${response}`)
-    return new Date()
+    let result = await getScreenTime(4, 70, 73, 76)
+
+    await getScreenTextTrimmed(12, 31, 'Processing'.length)
+
+    if (await confirm(23, 20, 'Please Confirm')) {
+        try {
+            await typeAndEnter(23, 36, response)
+            result = await getScreenTime(4, 70, 73, 76)
+            return result
+        } catch {
+            result = await getScreenTime(4, 70, 73, 76)
+        }
+    }
+
+    return result
 }
 
 export function getNextBusinessDay(date: Date): Date {

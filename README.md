@@ -9,6 +9,7 @@ A TypeScript, React, and Postgres version of the original C# WinForms fund valua
 - A Process Details panel (opened via the NEXT button) summarizes the selected environment, company, Fund Valuation date, and FundVal type, and exposes the process/investment-group button grid.
 - Process buttons turn light green on a successful run and red when the process fails or returns no result.
 - An FMS terminal-automation layer (`src/ui/screens.ts`, `src/ui/actions.ts`, `src/ui/process.ts`) that incrementally ports the original C# WinForms process handlers (e.g. `processFMSD`, `processFMFVRM`, `processFMFV`, `processFMBAL`, `processFMPI`, `processFMPRD`, `processFMPID`, `processFMPFBBR`) screen-by-screen. Handlers not yet ported from the C# source remain as placeholder stubs.
+- Core screen-navigation logic in `src/ui/screens.ts` (`gotoFmsScreen` and `gotoFmsScreenByName`) has been ported from the original C# `GotoFmsScreen` overloads, handling FMS login/session confirmation, environment selection, and retrying navigation to the requested screen. Low-level terminal I/O primitives they depend on (e.g. `confirm`, `typeAndEnter`, `getScreenText`, `waitForIdle`) remain stubs pending the real 3270 terminal integration.
 - Express TypeScript API under `server/`.
 - Postgres schema, migration, and seed scripts under `database/`.
 - Vite proxy from `/api` to the local API server on port `5174`.
