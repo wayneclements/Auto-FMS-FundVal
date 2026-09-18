@@ -243,6 +243,16 @@ export async function getEditorData(runSheetName: string): Promise<EditorData> {
 
 export async function createEditorRow(table: 'companies' | 'fund-val-types' | 'processes' | 'investment-groups', values: Record<string, string>) {
   const database = requireDatabase()
+  if (table === 'fund-val-types') {
+    await database.query(
+      `insert into testops_portal.company_fundval_type (run_sheet_name, company, fundval_type, sort_order)
+       select $1, $2, $3, coalesce(max(sort_order), 0) + 1
+       from testops_portal.company_fundval_type
+       where run_sheet_name = $1 and company = $2`,
+      [values.runSheetName, values.company, values.fundValType],
+    )
+    return
+  }
   if (table === 'processes') {
     const client = await database.connect()
     try {
@@ -287,10 +297,11 @@ export async function createEditorRow(table: 'companies' | 'fund-val-types' | 'p
     return
   }
 
+  if (table === 'investment-groups' && !values.investmentGroup) throw new Error('Investment group is required.')
+
   const queries = {
     companies: ['insert into testops_portal.run_sheet_companies (run_sheet_name, company) values ($1, $2)', [values.runSheetName, values.company]],
-    'fund-val-types': ['insert into testops_portal.company_fundval_type (run_sheet_name, company, fundval_type) values ($1, $2, $3)', [values.runSheetName, values.company, values.fundValType]],
-    'investment-groups': ['insert into testops_portal.process_investment_group (run_sheet_name, company, fundval_type, process, investment_group) values ($1, $2, $3, $4, $5)', [values.runSheetName, values.company, values.fundValType, values.process, values.investmentGroup || null]],
+    'investment-groups': ['insert into testops_portal.process_investment_group (run_sheet_name, company, fundval_type, process, investment_group) values ($1, $2, $3, $4, $5)', [values.runSheetName, values.company, values.fundValType, values.process, values.investmentGroup]],
   } as const
   const [query, parameters] = queries[table]
   await database.query(query, [...parameters])
@@ -298,11 +309,13 @@ export async function createEditorRow(table: 'companies' | 'fund-val-types' | 'p
 
 export async function updateEditorRow(table: 'companies' | 'fund-val-types' | 'processes' | 'investment-groups', id: number, values: Record<string, string>) {
   const database = requireDatabase()
+  if (table === 'investment-groups' && !values.investmentGroup) throw new Error('Investment group is required.')
+
   const queries = {
     companies: ['update testops_portal.run_sheet_companies set company = $1 where id = $2', [values.company, id]],
     'fund-val-types': ['update testops_portal.company_fundval_type set fundval_type = $1 where id = $2', [values.fundValType, id]],
     processes: ['update testops_portal.fundval_type_process set process = $1 where id = $2', [values.process, id]],
-    'investment-groups': ['update testops_portal.process_investment_group set investment_group = $1 where id = $2', [values.investmentGroup || null, id]],
+    'investment-groups': ['update testops_portal.process_investment_group set investment_group = $1 where id = $2', [values.investmentGroup, id]],
   } as const
   const [query, parameters] = queries[table]
   const result = await database.query(query, [...parameters])

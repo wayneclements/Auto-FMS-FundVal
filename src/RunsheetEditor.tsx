@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { FormEvent, MouseEvent } from 'react'
 
 type RunSheet = { id: number, name: string }
 type EditorData = {
@@ -35,6 +35,16 @@ function compareInvestmentGroups(first: string | null, second: string | null) {
   return firstValue.localeCompare(secondValue)
 }
 
+type ContextMenuState = {
+  x: number
+  y: number
+  company: string
+  fundValType: string
+  process: string
+  groupId?: number
+  groupName?: string | null
+} | null
+
 export default function RunsheetEditor({ runSheets, onClose, onCompanyCreated }: { runSheets: RunSheet[], onClose: () => void, onCompanyCreated: (runSheetName: string) => void }) {
   const [runSheetName, setRunSheetName] = useState('')
   const [selectedCompany, setSelectedCompany] = useState('')
@@ -42,6 +52,7 @@ export default function RunsheetEditor({ runSheets, onClose, onCompanyCreated }:
   const [data, setData] = useState<EditorData>(emptyData)
   const [message, setMessage] = useState('Select a run sheet to edit its normalized data.')
   const [busy, setBusy] = useState(false)
+  const [contextMenu, setContextMenu] = useState<ContextMenuState>(null)
 
   async function reload(name = runSheetName) {
     if (!name) {
@@ -61,6 +72,68 @@ export default function RunsheetEditor({ runSheets, onClose, onCompanyCreated }:
   }
 
   useEffect(() => { void reload() }, [runSheetName])
+
+  useEffect(() => {
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target as Element | null
+      if (target?.closest('.context-menu')) return
+      setContextMenu(null)
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    return () => document.removeEventListener('pointerdown', handlePointerDown)
+  }, [])
+
+  function openGroupContextMenu(event: MouseEvent<HTMLTableCellElement>, item: { company: string, fundValType: string, process: string }, group?: { id: number, investmentGroup: string | null }) {
+    event.preventDefault()
+    setContextMenu({
+      x: event.clientX,
+      y: event.clientY,
+      company: item.company,
+      fundValType: item.fundValType,
+      process: item.process,
+      groupId: group?.id,
+      groupName: group?.investmentGroup ?? null,
+    })
+  }
+
+  async function addInvestmentGroup() {
+    if (!contextMenu) return
+
+    const value = window.prompt('Investment group value', contextMenu.groupName ?? '')
+    if (value === null) {
+      setContextMenu(null)
+      return
+    }
+
+    const investmentGroup = value.trim()
+    if (!investmentGroup) {
+      setContextMenu(null)
+      return
+    }
+
+    setBusy(true)
+    try {
+      await request(`/api/editor/investment-groups`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          runSheetName,
+          company: contextMenu.company,
+          fundValType: contextMenu.fundValType,
+          process: contextMenu.process,
+          investmentGroup,
+        }),
+      })
+      await reload(runSheetName)
+      setMessage(`Added investment group ${investmentGroup} to ${contextMenu.process}.`)
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Could not add investment group.')
+    } finally {
+      setBusy(false)
+      setContextMenu(null)
+    }
+  }
 
   async function create(table: EditorTable, event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -99,6 +172,14 @@ export default function RunsheetEditor({ runSheets, onClose, onCompanyCreated }:
     } finally { setBusy(false) }
   }
 
+  async function deleteGroupFromContextMenu() {
+    if (!contextMenu || contextMenu.groupId === undefined) return
+
+    const label = contextMenu.groupName ?? `${contextMenu.process} investment group`
+    await remove('investment-groups', contextMenu.groupId, label)
+    setContextMenu(null)
+  }
+
   const typeOptions = data.fundValTypes.map((item) => `${item.company}|${item.fundValType}`)
   const processOptions = data.processes.map((item) => `${item.company}|${item.fundValType}|${item.process}`)
   const visibleFundValTypes = selectedCompany
@@ -123,7 +204,7 @@ export default function RunsheetEditor({ runSheets, onClose, onCompanyCreated }:
       {runSheetName && <div className="editor-sections">
         <section className="editor-section"><h2>Companies</h2><form className="editor-add" onSubmit={(event) => void create('companies', event)}><input name="company" placeholder="Company" required /><button disabled={busy}>Add</button></form><table><thead><tr><th>Company</th><th /></tr></thead><tbody>{data.companies.map((item) => <tr key={item.id}><td><input form={`company-${item.id}`} name="company" defaultValue={item.company} required onFocus={() => { setSelectedCompany(item.company); setSelectedFundValType('') }} /></td><td><form className="editor-actions" id={`company-${item.id}`} onSubmit={(event) => void update('companies', item.id, event)}><button disabled={busy}>Save</button><button type="button" disabled={busy} onClick={() => void remove('companies', item.id, item.company)}>Delete</button></form></td></tr>)}</tbody></table></section>
         <section className="editor-section"><h2>FundVal Types</h2><form className="editor-add" onSubmit={(event) => void create('fund-val-types', event)}><input type="hidden" name="company" value={selectedCompany} /><input name="fundValType" placeholder="FundVal type" required /><button disabled={busy || !selectedCompany}>Add</button></form><table><thead><tr><th>Company</th><th>FundVal type</th><th /></tr></thead><tbody>{visibleFundValTypes.map((item) => <tr key={item.id} onClick={() => setSelectedFundValType(item.fundValType)} aria-selected={selectedFundValType === item.fundValType}><td>{item.company}</td><td><form id={`type-${item.id}`} onSubmit={(event) => void update('fund-val-types', item.id, event)}><input name="fundValType" defaultValue={item.fundValType} required /></form></td><td><button form={`type-${item.id}`} disabled={busy}>Save</button><button type="button" disabled={busy} onClick={() => void remove('fund-val-types', item.id, item.fundValType)}>Delete</button></td></tr>)}</tbody></table></section>
-        <section className="editor-section process-matrix">{processHeadingValues && <h2>Processes ({processHeadingValues})</h2>}<form className="editor-add" onSubmit={(event) => void create('processes', event)}><select name="parent" required onChange={(event) => { const [company, fundValType] = event.target.value.split('|'); const form = event.currentTarget.form; if (!form) return; form.querySelector<HTMLInputElement>('[name=company]')!.value = company; form.querySelector<HTMLInputElement>('[name=fundValType]')!.value = fundValType }}><option value="">Company / type</option>{typeOptions.map((item) => <option key={item} value={item}>{item.replace('|', ' / ')}</option>)}</select><input type="hidden" name="company" /><input type="hidden" name="fundValType" /><input name="process" placeholder="Process" required /><button disabled={busy}>Add</button></form><form className="editor-add" onSubmit={(event) => void create('investment-groups', event)}><select name="parent" required onChange={(event) => { const [company, fundValType, process] = event.target.value.split('|'); const form = event.currentTarget.form!; form.querySelector<HTMLInputElement>('[name=company]')!.value = company; form.querySelector<HTMLInputElement>('[name=fundValType]')!.value = fundValType; form.querySelector<HTMLInputElement>('[name=process]')!.value = process }}><option value="">Company / type / process</option>{processOptions.map((item) => <option key={item} value={item}>{item.replaceAll('|', ' / ')}</option>)}</select><input type="hidden" name="company" /><input type="hidden" name="fundValType" /><input type="hidden" name="process" /><input name="investmentGroup" placeholder="Investment group" required /><button disabled={busy}>Add</button></form><table><tbody>{visibleProcesses.map((item) => { const groups = investmentGroupsByProcess.get(item.process) ?? []; return <tr key={item.id}><td className="process-cell"><button type="button" className="process-button">{item.process}</button></td>{Array.from({ length: investmentGroupColumnCount }, (_, index) => { const group = groups[index]; return <td className="investment-group-cell" key={index}>{group && <form id={`group-${group.id}`} onSubmit={(event) => void update('investment-groups', group.id, event)}><input name="investmentGroup" defaultValue={group.investmentGroup ?? ''} /></form>}</td>})}<td><button type="button" disabled={busy} onClick={() => void remove('processes', item.id, item.process)}>Delete</button></td></tr>})}</tbody></table></section>
+        <section className="editor-section process-matrix">{processHeadingValues && <h2>Processes ({processHeadingValues})</h2>}<form className="editor-add" onSubmit={(event) => void create('processes', event)}><select name="parent" required onChange={(event) => { const [company, fundValType] = event.target.value.split('|'); const form = event.currentTarget.form; if (!form) return; form.querySelector<HTMLInputElement>('[name=company]')!.value = company; form.querySelector<HTMLInputElement>('[name=fundValType]')!.value = fundValType }}><option value="">Company / type</option>{typeOptions.map((item) => <option key={item} value={item}>{item.replace('|', ' / ')}</option>)}</select><input type="hidden" name="company" /><input type="hidden" name="fundValType" /><input name="process" placeholder="Process" required /><button disabled={busy}>Add</button></form><form className="editor-add" onSubmit={(event) => void create('investment-groups', event)}><select name="parent" required onChange={(event) => { const [company, fundValType, process] = event.target.value.split('|'); const form = event.currentTarget.form!; form.querySelector<HTMLInputElement>('[name=company]')!.value = company; form.querySelector<HTMLInputElement>('[name=fundValType]')!.value = fundValType; form.querySelector<HTMLInputElement>('[name=process]')!.value = process }}><option value="">Company / type / process</option>{processOptions.map((item) => <option key={item} value={item}>{item.replaceAll('|', ' / ')}</option>)}</select><input type="hidden" name="company" /><input type="hidden" name="fundValType" /><input type="hidden" name="process" /><input name="investmentGroup" placeholder="Investment group" required /><button disabled={busy}>Add</button></form><table><tbody>{visibleProcesses.map((item) => { const groups = investmentGroupsByProcess.get(item.process) ?? []; return <tr key={item.id}><td className="process-cell"><button type="button" className="process-button">{item.process}</button></td>{Array.from({ length: investmentGroupColumnCount }, (_, index) => { const group = groups[index]; return <td className="investment-group-cell" key={index} onContextMenu={(event) => openGroupContextMenu(event, item, group ?? undefined)}>{group && <form id={`group-${group.id}`} onSubmit={(event) => void update('investment-groups', group.id, event)}><input name="investmentGroup" defaultValue={group.investmentGroup ?? ''} required /></form>}</td>})}<td><button type="button" disabled={busy} onClick={() => void remove('processes', item.id, item.process)}>Delete</button></td></tr>})}</tbody></table>{contextMenu && <div className="context-menu" style={{ left: contextMenu.x, top: contextMenu.y }} role="menu" aria-label="Investment group actions"><button type="button" onClick={() => void addInvestmentGroup()}>Add</button>{contextMenu.groupId !== undefined && <button type="button" onClick={() => void deleteGroupFromContextMenu()}>Delete</button>}</div>}</section>
       </div>}
     </section>
   </main>

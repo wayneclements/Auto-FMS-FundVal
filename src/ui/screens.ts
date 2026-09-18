@@ -10,7 +10,8 @@ export async function gotoFmsScreen(screenName: string, ...programs: string[]): 
     }
 
     if (await confirm(1, 2, 'Enter your userid and password')) {
-        throw new Error('FMS is not logged in, please login and try again')
+        return true;
+        throw new Error('FMS is not logged in, please login and try again');
     }
 
     if (await confirm(1, 2, 'E#30 Userid is blank or nulls, please enter a userid')) {
