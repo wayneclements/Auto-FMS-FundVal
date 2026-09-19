@@ -11,6 +11,43 @@ export async function writeToProcessingLog(environment: string, companyName: str
 	await writeProcessingLogEntry(environment, companyName, fundValDate, message)
 }
 
+export async function getListOfInvestmentGroupStatus(): Promise<Map<string, boolean>> {
+	const statuses = new Map<string, boolean>()
+
+	if (!await screens.gotoFmsScreen('FMIGM', 'FIS040M1')) return statuses
+
+	const firstRow = 9
+	const lastRow = 21
+	const emptyScreenDate = new Date(1899, 11, 30).getTime()
+
+	while (true) {
+		for (let row = firstRow; row <= lastRow; row += 1) {
+			const investmentGroup = (await screens.getInteger(row, 4, 4)).toString()
+			if (investmentGroup !== '0') {
+				const closeDate = await screens.getScreenDate(row, 49, 52, 55)
+				statuses.set(investmentGroup, closeDate.getTime() !== emptyScreenDate)
+			}
+		}
+
+		if (await screens.getScreenTextTrimmed(24, 50, 1) === '') {
+			statuses.set("10", true);
+			statuses.set("11", true);
+			statuses.set("50", true);
+			statuses.set("51", true);
+			statuses.set("60", true);
+			statuses.set("65", true);
+			statuses.set("70", true);
+			statuses.set("71", true);
+			statuses.set("90", true);
+			statuses.set("91", true);
+			statuses.set("120", true);
+			return statuses
+		}
+
+		await screens.setAction('PF8')
+	}
+}
+
 export async function processFMSD(fundValDate: Date): Promise<boolean> {
 	if (!await screens.gotoFmsScreen('FMSD', 'FIS953M1')) return false
 

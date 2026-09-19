@@ -52,6 +52,7 @@
 .editor-section { padding: 16px; border-right: 1px solid #d4d9d5; border-bottom: 1px solid #d4d9d5; overflow: auto; }
 .process-matrix { grid-column: 1 / -1; border-right: 0; }
 .editor-section h2 { margin: 0 0 10px; font: 600 15px Georgia, serif; }
+.editor-section th { font: 600 15px Georgia, serif; color: #222; letter-spacing: 0; }
 .editor-add { display: grid; grid-template-columns: minmax(100px, 1fr) minmax(100px, 1fr) auto; gap: 6px; margin-bottom: 10px; }
 .editor-section:nth-child(3) .editor-add, .editor-section:nth-child(4) .editor-add { grid-template-columns: minmax(150px, 1fr) minmax(110px, 1fr) auto; }
 .editor-section table { width: 100%; border-collapse: collapse; font: 12px "Segoe UI", Tahoma, sans-serif; }
@@ -281,8 +282,8 @@
   padding: 7px 9px;
   border-bottom: 1px solid #c5c5c5;
   background: #f8f8f8;
-  color: #555;
-  font: 600 12px "Segoe UI", Tahoma, sans-serif;
+  color: #333;
+  font: 700 14px "Segoe UI", Tahoma, sans-serif;
 }
 
 .process-form {
@@ -326,6 +327,10 @@
   margin-top: 10px;
 }
 
+.process-grid-spacer {
+  height: 24px;
+}
+
 .process-grid-button {
   height: 24px;
   min-width: 0;
@@ -339,12 +344,11 @@
 }
 
 .process-grid-button.active-investment-group {
-  border-color: #75ae69;
-  background: #b9e6b0;
+  border-color: #79aeca;
+  background: #cfe8f7;
 }
 
-.process-grid-button.hidden-investment-group {
-  visibility: hidden;
+.process-grid-button.empty-investment-group {
   pointer-events: none;
 }
 

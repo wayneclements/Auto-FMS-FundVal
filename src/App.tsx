@@ -3,6 +3,7 @@ import './App.css'
 import tickIcon from './assets/icons/tick.gif'
 import crossIcon from './assets/icons/cross.svg'
 import RunsheetEditor from './RunsheetEditor'
+import { getListOfInvestmentGroupStatus } from './ui/actions'
 import * as processModule from './ui/process'
 
 type Environment = 'UAT1' | 'UAT2' | 'PROD'
@@ -508,23 +509,35 @@ function App() {
   }, [showProcessForm])
 
   useEffect(() => {
-    if (!runSheetName || !companyName || !fundValTypeName) return
+    if (!showProcessForm || !runSheetName || !companyName || !fundValTypeName) return
 
     let current = true
 
-    getJson<Process[]>(`/api/run-sheets/${encodeURIComponent(runSheetName)}/companies/${encodeURIComponent(companyName)}/fund-val-types/${encodeURIComponent(fundValTypeName)}/processes`)
-      .then((items) => {
-        if (current) setProcesses(items)
-      })
-      .catch((currentError: unknown) => {
+    async function loadProcesses() {
+      try {
+        const items = await getJson<Process[]>(`/api/run-sheets/${encodeURIComponent(runSheetName)}/companies/${encodeURIComponent(companyName)}/fund-val-types/${encodeURIComponent(fundValTypeName)}/processes`)
+        const investmentGroupStatuses = await getListOfInvestmentGroupStatus()
+        if (!current) return
+
+        setProcesses(items.map((process) => ({
+          ...process,
+          investmentGroups: process.investmentGroups.map((investmentGroup) => ({
+            ...investmentGroup,
+            state: investmentGroup.state && investmentGroupStatuses.has(investmentGroup.name),
+          })),
+        })))
+      } catch (currentError: unknown) {
         if (!current) return
         setError(currentError instanceof Error ? currentError.message : 'Could not load processes')
-      })
+      }
+    }
+
+    void loadProcesses()
 
     return () => {
       current = false
     }
-  }, [companyName, fundValTypeName, runSheetName])
+  }, [companyName, fundValTypeName, runSheetName, showProcessForm])
 
   if (showRunsheetEditor) {
     return <RunsheetEditor runSheets={runSheets} onClose={() => setShowRunsheetEditor(false)} onCompanyCreated={handleCompanyCreated} />
@@ -621,14 +634,8 @@ function App() {
 
       {showProcessForm && (
         <section ref={processFormRef} className="process-window" aria-labelledby="process-details-heading">
-          <h2 id="process-details-heading">Process Details</h2>
+          <h2 id="process-details-heading">{fundValTypeName} for {companyName} in {environment} for {new Date(`${fundValDate}T00:00:00`).toLocaleDateString(undefined, { weekday: 'long' })} {fundValDateText}</h2>
           <form className="process-form">
-            <div className="process-summary-row">
-              <span><strong>Environment:</strong> {environment}</span>
-              <span><strong>Company:</strong> {companyName}</span>
-              <span><strong>Fund Valuation Date:</strong> {fundValDateText}</span>
-              <span><strong>FundVal Type:</strong> {fundValTypeName}</span>
-            </div>
             <div
               className="rich-text-box"
               contentEditable
@@ -638,31 +645,34 @@ function App() {
               suppressContentEditableWarning
             />
             <div className="process-button-grid" aria-label="Process button array">
-              {processes.slice(0, 20).flatMap((process, row) => (
-                Array.from({ length: 10 }, (_, column) => {
-                  const investmentGroup = column > 0 ? process.investmentGroups[column - 1] : undefined
-                  const label = column === 0 ? process.name : investmentGroup?.name
-                  const processResult = column === 0 ? processResults[process.name] : undefined
-                  const className = [
-                    'process-grid-button',
-                    investmentGroup?.state ? 'active-investment-group' : column > 0 ? 'hidden-investment-group' : '',
-                    processResult === true ? 'process-result-success' : processResult === false ? 'process-result-failure' : '',
-                  ].filter(Boolean).join(' ')
+              {[
+                ...Array.from({ length: 10 }, (_, column) => <span key={`spacer-${column}`} className="process-grid-spacer" aria-hidden="true" />),
+                ...processes.slice(0, 20).flatMap((process, row) => (
+                  Array.from({ length: 10 }, (_, column) => {
+                    const investmentGroup = column > 0 ? process.investmentGroups[column - 1] : undefined
+                    const label = column === 0 ? process.name : investmentGroup?.state ? investmentGroup.name : ''
+                    const processResult = column === 0 ? processResults[process.name] : undefined
+                    const className = [
+                      'process-grid-button',
+                      investmentGroup?.state ? 'active-investment-group' : column > 0 ? 'empty-investment-group' : '',
+                      processResult === true ? 'process-result-success' : processResult === false ? 'process-result-failure' : '',
+                    ].filter(Boolean).join(' ')
 
-                  return (
-                    <button
-                      type="button"
-                      key={`${row}-${column}`}
-                      className={className}
-                      title={column === 0 ? process.description : undefined}
-                      disabled={!label || (column === 0 && !fundValDate)}
-                      onClick={column === 0 ? () => void handleProcessButtonClick(process.name, companyName, process.investmentGroups, new Date(fundValDate)) : undefined}
-                    >
-                      {label ?? ''}
-                    </button>
-                  )
-                })
-              ))}
+                    return (
+                      <button
+                        type="button"
+                        key={`${row}-${column}`}
+                        className={className}
+                        title={column === 0 ? process.description : undefined}
+                        disabled={!label || (column === 0 && !fundValDate)}
+                        onClick={column === 0 ? () => void handleProcessButtonClick(process.name, companyName, process.investmentGroups, new Date(fundValDate)) : undefined}
+                      >
+                        {label ?? ''}
+                      </button>
+                    )
+                  })
+                )),
+              ]}
             </div>
           </form>
         </section>
@@ -672,4 +682,3 @@ function App() {
 }
 
 export default App
-
