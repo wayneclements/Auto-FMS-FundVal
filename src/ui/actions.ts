@@ -30,11 +30,11 @@ export async function getListOfInvestmentGroupStatus(): Promise<Map<string, bool
 		}
 
 		if (await screens.getScreenTextTrimmed(24, 50, 1) === '') {
-			statuses.set("10", true);
+			statuses.set("10", false);
 			statuses.set("11", true);
-			statuses.set("50", true);
+			statuses.set("50", false);
 			statuses.set("51", true);
-			statuses.set("60", true);
+			statuses.set("60", false);
 			statuses.set("65", true);
 			statuses.set("70", true);
 			statuses.set("71", true);

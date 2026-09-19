@@ -322,13 +322,8 @@
 
 .process-button-grid {
   display: grid;
-  grid-template-columns: minmax(190px, 3fr) repeat(9, minmax(0, 1fr));
   gap: 3px;
   margin-top: 10px;
-}
-
-.process-grid-spacer {
-  height: 24px;
 }
 
 .process-grid-button {

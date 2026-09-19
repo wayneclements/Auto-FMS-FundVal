@@ -27,6 +27,7 @@ export type FundValTypeRow = {
 export type ProcessRow = {
   name: string
   description: string
+  notes: string | null
   investmentGroups: Array<{
     name: string
     state: boolean
@@ -185,10 +186,12 @@ export async function listProcesses(runSheetName: string, companyName: string, f
 
   const result = await pool.query<{
     name: string
+    notes: string | null
     investment_groups: Array<{ name: string, state: boolean }>
   }>(
     `select
        ftp.process as name,
+       to_jsonb(ftp) ->> 'notes' as notes,
        coalesce(
          json_agg(json_build_object('name', pig.investment_group, 'state', pig.status) order by pig.investment_group::integer)
            filter (where pig.investment_group is not null),
@@ -201,7 +204,7 @@ export async function listProcesses(runSheetName: string, companyName: string, f
       and pig.fundval_type = ftp.fundval_type
       and pig.process = ftp.process
      where ftp.run_sheet_name = $1 and ftp.company = $2 and ftp.fundval_type = $3
-    group by ftp.process, ftp.sort_order
+    group by ftp.process, to_jsonb(ftp) ->> 'notes', ftp.sort_order
     order by ftp.sort_order asc, ftp.process asc`,
     [runSheetName, companyName, fundValTypeName],
   )
@@ -209,6 +212,7 @@ export async function listProcesses(runSheetName: string, companyName: string, f
   return result.rows.map((row) => ({
     name: row.name,
     description: '',
+    notes: row.notes,
     investmentGroups: row.investment_groups,
   }))
 }

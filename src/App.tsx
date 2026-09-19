@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import './App.css'
 import tickIcon from './assets/icons/tick.gif'
 import crossIcon from './assets/icons/cross.svg'
@@ -28,6 +28,7 @@ type FundValType = {
 type Process = {
   name: string
   description: string
+  notes: string | null
   investmentGroups: Array<{
     name: string
     state: boolean
@@ -74,6 +75,14 @@ function parseDisplayToIso(display: string): string {
   return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 }
 
+function renderRichText(value: string): ReactNode[] {
+  return value.split(/(\*\*.*?\*\*)/g).map((part, index) => (
+    part.startsWith('**') && part.endsWith('**')
+      ? <strong key={index}>{part.slice(2, -2)}</strong>
+      : part
+  ))
+}
+
 function readOnlyReason(type: FundValType | undefined, selectedDate: string) {
   if (!type || !selectedDate) return 'Selections are incomplete.'
   if (!type.lastFundValDate || !type.lastTotalUnitsExtractRunDate) return ''
@@ -116,7 +125,9 @@ function App() {
   const [showProcessForm, setShowProcessForm] = useState(false)
   const [showRunsheetEditor, setShowRunsheetEditor] = useState(false)
   const [processes, setProcesses] = useState<Process[]>([])
+  const [activeInvestmentGroups, setActiveInvestmentGroups] = useState<string[]>([])
   const [processResults, setProcessResults] = useState<Record<string, boolean>>({})
+  const [processNotes, setProcessNotes] = useState('')
   const processFormRef = useRef<HTMLElement>(null)
 
   function setFundValDate(iso: string) {
@@ -141,6 +152,8 @@ function App() {
     setCompanies([])
     setFundValTypes([])
     setProcesses([])
+    setActiveInvestmentGroups([])
+    setProcessNotes('')
     setCompanyName('')
     setFundValTypeName('')
     setFundValDate('')
@@ -154,6 +167,7 @@ function App() {
       setRunSheetName('')
       setCompanies([])
       setFundValTypes([])
+      setActiveInvestmentGroups([])
       setCompanyName('')
       setFundValTypeName('')
       setFundValDate('')
@@ -209,6 +223,8 @@ function App() {
     setCompanyName(value)
     setFundValTypes([])
     setProcesses([])
+    setActiveInvestmentGroups([])
+    setProcessNotes('')
     setFundValTypeName('')
     setFundValDate('')
     setStatus(value ? 'Identifying FundVal types' : 'Select the company')
@@ -268,6 +284,8 @@ function App() {
     const nextType = fundValTypes.find((type) => type.fundValType === value)
     setFundValTypeName(value)
     setProcesses([])
+    setActiveInvestmentGroups([])
+    setProcessNotes('')
     setFundValDate(nextFundValDate(nextType))
   }
 
@@ -519,12 +537,19 @@ function App() {
         const investmentGroupStatuses = await getListOfInvestmentGroupStatus()
         if (!current) return
 
+        setActiveInvestmentGroups(
+          Array.from(investmentGroupStatuses)
+            .filter(([, status]) => status)
+            .map(([investmentGroup]) => investmentGroup),
+        )
         setProcesses(items.map((process) => ({
           ...process,
-          investmentGroups: process.investmentGroups.map((investmentGroup) => ({
-            ...investmentGroup,
-            state: investmentGroup.state && investmentGroupStatuses.has(investmentGroup.name),
-          })),
+          investmentGroups: process.investmentGroups
+            .filter((investmentGroup) => investmentGroupStatuses.get(investmentGroup.name))
+            .map((investmentGroup) => ({
+              ...investmentGroup,
+              state: investmentGroup.state,
+            })),
         })))
       } catch (currentError: unknown) {
         if (!current) return
@@ -643,13 +668,18 @@ function App() {
               aria-multiline="true"
               aria-label="Process notes"
               suppressContentEditableWarning
-            />
-            <div className="process-button-grid" aria-label="Process button array">
+            >{renderRichText(processNotes)}</div>
+            <div
+              className="process-button-grid"
+              aria-label="Process button array"
+              style={{ gridTemplateColumns: `minmax(190px, 3fr) repeat(${activeInvestmentGroups.length}, minmax(0, 1fr))` }}
+            >
               {[
-                ...Array.from({ length: 10 }, (_, column) => <span key={`spacer-${column}`} className="process-grid-spacer" aria-hidden="true" />),
                 ...processes.slice(0, 20).flatMap((process, row) => (
-                  Array.from({ length: 10 }, (_, column) => {
-                    const investmentGroup = column > 0 ? process.investmentGroups[column - 1] : undefined
+                  Array.from({ length: activeInvestmentGroups.length + 1 }, (_, column) => {
+                    const investmentGroup = column > 0
+                      ? process.investmentGroups.find(({ name }) => name === activeInvestmentGroups[column - 1])
+                      : undefined
                     const label = column === 0 ? process.name : investmentGroup?.state ? investmentGroup.name : ''
                     const processResult = column === 0 ? processResults[process.name] : undefined
                     const className = [
@@ -665,6 +695,7 @@ function App() {
                         className={className}
                         title={column === 0 ? process.description : undefined}
                         disabled={!label || (column === 0 && !fundValDate)}
+                        onMouseEnter={column === 0 ? () => setProcessNotes(process.notes ?? '') : undefined}
                         onClick={column === 0 ? () => void handleProcessButtonClick(process.name, companyName, process.investmentGroups, new Date(fundValDate)) : undefined}
                       >
                         {label ?? ''}
