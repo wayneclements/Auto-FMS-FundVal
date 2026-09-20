@@ -44,6 +44,7 @@ Run these migrations against `testops_portal_db` after the base `testops_portal`
 - `database/add-process-investment-group-status.sql` adds the `status` column to `testops_portal.process_investment_group`, assigns existing records an approximately 80/20 true/false distribution, and defaults future records to `true`. This value controls whether an investment group that is present in FMS is highlighted in the Process Details grid.
 - `database/add-fundval-type-process-notes.sql` adds the nullable `notes` text column to `testops_portal.fundval_type_process`.
 - `database/create-fund-valuation-processing-log-table.sql` creates `testops_portal.fund_valuation_processing_log` for process activity messages.
+- `database/create-processing-log-table.sql` creates `testops_portal.processing_log` with `username`, `message`, `company_fund_val_type`, `environment`, `company`, `fund_val_date`, `status`, `process`, `investment_group`, and `actual_date_time` columns.
 
 The API exposes `POST /api/processing-log` for writing entries with an environment, company, Fund Valuation date, and message. The React-side helpers are in `src/ui/database.ts` and `src/ui/actions.ts`.
 

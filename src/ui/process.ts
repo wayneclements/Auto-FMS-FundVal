@@ -5,27 +5,33 @@ export type ProcessInvestmentGroup = {
   state: boolean
 }
 
+export type InvestmentGroupResultCallback = (investmentGroupName: string, success: boolean) => void
+
 export async function processFMSDbutton(_environment: string, _company: string, _investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date) {
   return processFMSD(_fundValDate)
 }
 
-export async function processFMPPFRbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date) {
+export async function processFMPPFRbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
   const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
-    if (!await processFMPPFR(investmentGroup.name)) return false
+    const success = await processFMPPFR(investmentGroup.name)
+    onInvestmentGroupResult?.(investmentGroup.name, success)
+    if (!success) return false
   }
 
   return true
 }
 
-export async function processFMPPPbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date) {
+export async function processFMPPPbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
   const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
-    if (!await processFMPPP(investmentGroup.name)) return false
+    const success = await processFMPPP(investmentGroup.name)
+    onInvestmentGroupResult?.(investmentGroup.name, success)
+    if (!success) return false
   }
 
   return true
@@ -35,12 +41,14 @@ export async function processFMPIVbutton(_environment: string, _company: string,
   return processFMPIV(fundValDate)
 }
 
-export async function processFMFVRMbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+export async function processFMFVRMbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
   const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
-    if (!await processFMFVRM(investmentGroup.name, fundValDate)) return false
+    const success = await processFMFVRM(investmentGroup.name, fundValDate)
+    onInvestmentGroupResult?.(investmentGroup.name, success)
+    if (!success) return false
   }
 
   return true
@@ -50,23 +58,27 @@ export async function processFMPFVbutton(_environment: string, _company: string,
   return processFMPFV()
 }
 
-export async function processFMFVbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date) {
+export async function processFMFVbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
   const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
-    if (!await processFMFV(investmentGroup.name)) return false
+    const success = await processFMFV(investmentGroup.name)
+    onInvestmentGroupResult?.(investmentGroup.name, success)
+    if (!success) return false
   }
 
   return true
 }
 
-export async function processFMBALbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date) {
+export async function processFMBALbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
   const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
-    if (!await processFMBAL(investmentGroup.name)) return false
+    const success = await processFMBAL(investmentGroup.name)
+    onInvestmentGroupResult?.(investmentGroup.name, success)
+    if (!success) return false
   }
 
   return true
@@ -76,12 +88,14 @@ export async function processFMPIbutton(_environment: string, _company: string, 
   return processFMPI(fundValDate, new Date())
 }
 
-export async function processFMPRDbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date) {
+export async function processFMPRDbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
   const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
-    if (!await processFMPRD(investmentGroup.name)) return false
+    const success = await processFMPRD(investmentGroup.name)
+    onInvestmentGroupResult?.(investmentGroup.name, success)
+    if (!success) return false
   }
 
   return true
@@ -91,12 +105,14 @@ export async function processFMPIDbutton(_environment: string, _company: string,
   return processFMPID()
 }
 
-export async function processFMPPPDbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date) {
+export async function processFMPPPDbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
   const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
-    if (!await processFMPPPD(investmentGroup.name)) return false
+    const success = await processFMPPPD(investmentGroup.name)
+    onInvestmentGroupResult?.(investmentGroup.name, success)
+    if (!success) return false
   }
 
   return true
@@ -130,34 +146,40 @@ export async function processFMTUEbutton(_environment: string, _company: string,
   return processFMTUE(fundValDate)
 }
 
-export async function processFMDRMbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+export async function processFMDRMbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
   const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
-    if (!await processFMDRM(investmentGroup.name, fundValDate)) return false
+    const success = await processFMDRM(investmentGroup.name, fundValDate)
+    onInvestmentGroupResult?.(investmentGroup.name, success)
+    if (!success) return false
   }
 
   return true
 }
 
-export async function processFMCIAbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+export async function processFMCIAbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
   const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
-    if (!await processFMCIA(investmentGroup.name, fundValDate)) return false
+    const success = await processFMCIA(investmentGroup.name, fundValDate)
+    onInvestmentGroupResult?.(investmentGroup.name, success)
+    if (!success) return false
   }
 
   return true
 }
 
-export async function processFMDPbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+export async function processFMDPbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
   const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
-    if (!await processFMDP(investmentGroup.name, fundValDate)) return false
+    const success = await processFMDP(investmentGroup.name, fundValDate)
+    onInvestmentGroupResult?.(investmentGroup.name, success)
+    if (!success) return false
   }
 
   return true
@@ -171,12 +193,14 @@ export async function processFMPRPCbutton(_environment: string, _company: string
   return processFMPRPC(fundValDate)
 }
 
-export async function processFMFCPSbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+export async function processFMFCPSbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
   const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
-    if (!await processFMFCPS(investmentGroup.name, fundValDate)) return false
+    const success = await processFMFCPS(investmentGroup.name, fundValDate)
+    onInvestmentGroupResult?.(investmentGroup.name, success)
+    if (!success) return false
   }
 
   return true
@@ -186,12 +210,14 @@ export async function processFMRBFSRbutton(_environment: string, _company: strin
   return processFMRBFSR(fundValDate)
 }
 
-export async function processFMPSMbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+export async function processFMPSMbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
   const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
-    if (!await processFMPSM('', investmentGroup.name, fundValDate)) return false
+    const success = await processFMPSM('', investmentGroup.name, fundValDate)
+    onInvestmentGroupResult?.(investmentGroup.name, success)
+    if (!success) return false
   }
 
   return true
@@ -212,12 +238,14 @@ export async function processFMARbutton(environment: string, _company: string, _
   return processFMAR(environment, fundValDate)
 }
 
-export async function processFMTCFPbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+export async function processFMTCFPbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
   const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
-    if (!await processFMTCFP(investmentGroup.name, fundValDate)) return false
+    const success = await processFMTCFP(investmentGroup.name, fundValDate)
+    onInvestmentGroupResult?.(investmentGroup.name, success)
+    if (!success) return false
   }
 
   return true
@@ -231,34 +259,40 @@ export async function processFMPMIPbutton(_environment: string, _company: string
   return processFMPMIP(fundValDate, '1')
 }
 
-export async function processFMRBRRbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+export async function processFMRBRRbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
   const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
-    if (!await processFMRBRR(investmentGroup.name, fundValDate)) return false
+    const success = await processFMRBRR(investmentGroup.name, fundValDate)
+    onInvestmentGroupResult?.(investmentGroup.name, success)
+    if (!success) return false
   }
 
   return true
 }
 
-export async function processFMPRBMRbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+export async function processFMPRBMRbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
   const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
-    if (!await processFMPRBMR(investmentGroup.name, fundValDate)) return false
+    const success = await processFMPRBMR(investmentGroup.name, fundValDate)
+    onInvestmentGroupResult?.(investmentGroup.name, success)
+    if (!success) return false
   }
 
   return true
 }
 
-export async function processFMPDCDbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+export async function processFMPDCDbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
   const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
-    if (!await processFMPDCD(investmentGroup.name, fundValDate)) return false
+    const success = await processFMPDCD(investmentGroup.name, fundValDate)
+    onInvestmentGroupResult?.(investmentGroup.name, success)
+    if (!success) return false
   }
 
   return true
@@ -268,12 +302,14 @@ export async function processFMMFRPbutton(_environment: string, _company: string
   return processFMMFRP(fundValDate)
 }
 
-export async function processFMMFAbutton(environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+export async function processFMMFAbutton(environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
   const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
-    if (!await processFMMFA(environment, investmentGroup.name, fundValDate)) return false
+    const success = await processFMMFA(environment, investmentGroup.name, fundValDate)
+    onInvestmentGroupResult?.(investmentGroup.name, success)
+    if (!success) return false
   }
 
   return true
@@ -283,23 +319,27 @@ export async function processFMPASFbutton(_environment: string, _company: string
   return processFMPASF(fundValDate, '1')
 }
 
-export async function processFMPPDbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+export async function processFMPPDbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
   const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
-    if (!await processFMPPD(investmentGroup.name, fundValDate)) return false
+    const success = await processFMPPD(investmentGroup.name, fundValDate)
+    onInvestmentGroupResult?.(investmentGroup.name, success)
+    if (!success) return false
   }
 
   return true
 }
 
-export async function processFMDIRMbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+export async function processFMDIRMbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
   const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
-    if (!await processFMDIRM(investmentGroup.name, fundValDate, '', '', '', '')) return false
+    const success = await processFMDIRM(investmentGroup.name, fundValDate, '', '', '', '')
+    onInvestmentGroupResult?.(investmentGroup.name, success)
+    if (!success) return false
   }
 
   return true
@@ -314,12 +354,14 @@ export async function processFMPSMREPbutton(_environment: string, _company: stri
   return false
 }
 
-export async function processFMPFBBRbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+export async function processFMPFBBRbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
   const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
-    if (!await processFMPFBBR(investmentGroup.name, fundValDate)) return false
+    const success = await processFMPFBBR(investmentGroup.name, fundValDate)
+    onInvestmentGroupResult?.(investmentGroup.name, success)
+    if (!success) return false
   }
 
   return true
@@ -342,12 +384,14 @@ export async function processFMCFPbutton(_environment: string, _company: string,
   return processFMCFP(fundValDate)
 }
 
-export async function processFMMFDbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
+export async function processFMMFDbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
   const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
-    if (!await processFMMFD(investmentGroup.name, fundValDate)) return false
+    const success = await processFMMFD(investmentGroup.name, fundValDate)
+    onInvestmentGroupResult?.(investmentGroup.name, success)
+    if (!success) return false
   }
 
   return true
@@ -357,12 +401,14 @@ export async function processFMPDDbutton(_environment: string, _company: string,
   return processFMPDD(fundValDate, '1')
 }
 
-export async function processFMAPTPbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date) {
+export async function processFMAPTPbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
   const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
-    if (!await processFMAPTP(investmentGroup.name)) return false
+    const success = await processFMAPTP(investmentGroup.name)
+    onInvestmentGroupResult?.(investmentGroup.name, success)
+    if (!success) return false
   }
 
   return true

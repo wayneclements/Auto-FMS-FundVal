@@ -49,6 +49,8 @@ export async function getListOfInvestmentGroupStatus(): Promise<Map<string, bool
 }
 
 export async function processFMSD(fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) === 0) return false
+
 	if (!await screens.gotoFmsScreen('FMSD', 'FIS953M1')) return false
 
 	if (await screens.confirm(23, 20, 'Please Confirm')) {
@@ -72,6 +74,8 @@ export async function processFMSD(fundValDate: Date): Promise<boolean> {
 }
 
 export async function processFMPPFR(investmentGroup: string): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) === 0) return false
+
 	if (!await screens.gotoFmsScreen('FMPPFR', 'FIA445M1')) return false
 
 	await screens.typeAndEnter(18, 2, 'Excel Report Dest')
@@ -85,6 +89,7 @@ export async function processFMPPFR(investmentGroup: string): Promise<boolean> {
 }
 
 export async function processFMPPP(investmentGroup: string): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) === 0) return false
 	if (!await screens.gotoFmsScreen('FMPPP', 'FIA450M1')) return false
 
 	await typeReportDestination(10, 2, 22, 'Excel Report Dest')
@@ -101,6 +106,7 @@ export async function processFMPPP(investmentGroup: string): Promise<boolean> {
 }
 
 export async function processFMPPPD(investmentGroup: string): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) === 0) return false
 	if (!await screens.gotoFmsScreen('FMPPPD', 'FIA485M1')) return false
 
 	await screens.typeAndEnter(10, 2, 'Report Printed at')
@@ -116,6 +122,7 @@ export async function processFMPPPD(investmentGroup: string): Promise<boolean> {
 }
 
 export async function processFMPIV(fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) === 0) return false
 	if (await isJobAlreadySuccessful('FMPIV')) return true
 	if (!await screens.gotoFmsScreen('FMPIV', 'FIS696M1')) return false
 
@@ -223,6 +230,7 @@ async function addMissingRates(): Promise<void> {
 }
 
 export async function processFMFVRM(investmentGroup: string, fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return true
 	if (!await screens.gotoFmsScreen('FMFVRM', 'FIS051M1')) return false
 
 	await screens.typeAndEnter(5, 15, investmentGroup.padStart(4, ' '))
@@ -432,6 +440,7 @@ async function processFMDRIM(_list: InvestmentGroupTuple[]): Promise<boolean> {
 }
 
 export async function processFMPFV(): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return true
 	if (await isJobAlreadySuccessful('FMPFV')) return true
 	if (!await screens.gotoFmsScreen('FMPFV', 'FIS461M1')) return false
 
@@ -471,6 +480,7 @@ async function processAccountPurchaseWithBanking(_value: string, _reference: str
 }
 
 export async function processFMFV(investmentGroup: string): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return true
 	if (!await screens.gotoFmsScreen('FMFV', 'FIS460M1')) return false
 
 	if (await screens.confirm(8, 14, 'Invalid Printer ID')) await screens.typeAndEnter(12, 14, 'S')
