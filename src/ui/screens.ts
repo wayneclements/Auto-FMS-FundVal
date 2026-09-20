@@ -184,6 +184,7 @@ export async function gotoFMMFDscreen(): Promise<boolean> {
 
 export async function confirm(row: number, column: number, text: string): Promise<boolean> {
     console.log(`FMS confirmation requested at ${row},${column}: ${text}`)
+    await new Promise((resolve) => setTimeout(resolve, 100));
     return true;
 }
 

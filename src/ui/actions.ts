@@ -230,7 +230,7 @@ async function addMissingRates(): Promise<void> {
 }
 
 export async function processFMFVRM(investmentGroup: string, fundValDate: Date): Promise<boolean> {
-	if (Math.floor(Math.random() * 20) > 0) return true
+	if (Math.floor(Math.random() * 20) > 10) return true
 	if (!await screens.gotoFmsScreen('FMFVRM', 'FIS051M1')) return false
 
 	await screens.typeAndEnter(5, 15, investmentGroup.padStart(4, ' '))
@@ -480,7 +480,7 @@ async function processAccountPurchaseWithBanking(_value: string, _reference: str
 }
 
 export async function processFMFV(investmentGroup: string): Promise<boolean> {
-	if (Math.floor(Math.random() * 20) > 0) return true
+	if (Math.floor(Math.random() * 20) > 10) return true
 	if (!await screens.gotoFmsScreen('FMFV', 'FIS460M1')) return false
 
 	if (await screens.confirm(8, 14, 'Invalid Printer ID')) await screens.typeAndEnter(12, 14, 'S')
@@ -571,6 +571,7 @@ export async function processFMFV(investmentGroup: string): Promise<boolean> {
 }
 
 export async function processFMBAL(investmentGroup: string): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 10) return false
 	if (!await screens.gotoFmsScreen('FMBALAN', 'FMS507M1')) return false
 
 	if (await screens.confirm(12, 9, 'Fix ABOTD')) await screens.type(12, 41, 'Y')
@@ -588,6 +589,7 @@ export async function processFMBAL(investmentGroup: string): Promise<boolean> {
 }
 
 export async function processFMPI(fundValDate: Date, _systemDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 10) return false
 	if (fundValDate.getDay() === 0 || fundValDate.getDay() === 6) return false
 
 	if (await isJobAlreadySuccessful('FMPI')) return true
@@ -617,6 +619,7 @@ export async function processFMPI(fundValDate: Date, _systemDate: Date): Promise
 }
 
 export async function processFMPRD(investmentGroup: string): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 10) return true
 	if (!await screens.gotoFmsScreen('FMPRD', 'FMS260M1')) return false
 
 	await typeReportDestination(9, 2, 23, 'Report Destination')
@@ -689,6 +692,7 @@ export async function processFMPRD(investmentGroup: string): Promise<boolean> {
 }
 
 export async function processFMPID(): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (await isJobAlreadySuccessful('FMPID')) return true
 	if (!await screens.gotoFmsScreen('FMPID', 'FIS272M1')) return false
 
@@ -717,6 +721,7 @@ async function getPendingFVALBankBalancingReportRow(fundValDate: Date): Promise<
 }
 
 export async function processFMPFBBR(investmentGroup: string, fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (!await screens.gotoFmsScreen('FMPFBBR', 'FIG150M1')) return false
 
 	await typeReportDestination(20, 9, 30, 'Report Destination')
@@ -741,6 +746,7 @@ export async function processFMPFBBR(investmentGroup: string, fundValDate: Date)
 }
 
 export async function processFMITIH(fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (await isJobAlreadySuccessful('FMITIH')) return true
 	if (!await screens.gotoFmsScreen('FMITIH', 'FIS757M1')) return false
 
@@ -761,6 +767,7 @@ export async function processFMITIH(fundValDate: Date): Promise<boolean> {
 }
 
 export async function processFMDIH(_fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (await isJobAlreadySuccessful('FMDIH')) return true
 	if (!await screens.gotoFmsScreen('FMDIH', 'FIS749M1')) return false
 
@@ -777,6 +784,7 @@ export async function processFMDIH(_fundValDate: Date): Promise<boolean> {
 }
 
 export async function processFMATI(): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (await isJobAlreadySuccessful('FMATI')) return true
 	if (!await screens.gotoFmsScreen('FMATI', 'FIS753M1')) return false
 
@@ -791,6 +799,7 @@ export async function processFMATI(): Promise<boolean> {
 }
 
 export async function processFMHAI(): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	const timeout = Date.now() + 60_000
 	if (await isJobAlreadySuccessful('FMHAI')) return true
 	if (!await screens.gotoFmsScreen('FMHAI', 'FIS753M2')) return false
@@ -816,6 +825,7 @@ async function getCompanyParameterMaintenanceRow(value: string): Promise<number>
 }
 
 export async function processFMCP(fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (!await screens.gotoFmsScreen('FMCP', 'FIS992M1')) return false
 	if (!await screens.confirm(5, 2, 'Code Ty')) return false
 
@@ -833,6 +843,7 @@ export async function processFMCP(fundValDate: Date): Promise<boolean> {
 }
 
 export async function processFMPCP(_fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	return screens.gotoFmsScreen('FMPCP', 'FMS490M1')
 }
 
@@ -869,6 +880,7 @@ async function typeReportDestination(row: number, firstColumn: number, secondCol
 }
 
 export async function processFMTUE(fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (await isJobAlreadySuccessful('FMTUE')) return true
 
 	while (true) {
@@ -931,6 +943,7 @@ async function addNewDistributionRates(_row: number, _fundValDate: Date): Promis
 }
 
 export async function processFMDRM(investmentGroup: string, fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	const openInvestmentOptions = await getListOfOpenInvestmentOptions(investmentGroup, fundValDate)
 	if (!await screens.gotoFmsScreen('FMDRM', 'FIS105M1')) return false
 
@@ -1155,6 +1168,7 @@ async function getDistributionOptionRow(investmentOption: string): Promise<numbe
 }
 
 export async function processFMBS(fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (!await screens.gotoFmsScreen('FMBS', 'FMS432M1')) return false
 
 	if (await screens.confirm(12, 2, 'Print Hardcopy only')) await screens.type(12, 25, 'N')
@@ -1172,6 +1186,7 @@ export async function processFMBS(fundValDate: Date): Promise<boolean> {
 }
 
 export async function processFMPRPC(_fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (!await screens.gotoFmsScreen('FMPRPC', 'FIB125M3')) return false
 	if (!await screens.confirm(9, 15, 'Product group to be processed')) return false
 
@@ -1182,6 +1197,7 @@ export async function processFMPRPC(_fundValDate: Date): Promise<boolean> {
 }
 
 export async function processFMFCPS(investmentGroup: string, fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (!await screens.gotoFmsScreen('FMFCPS', 'FIC418M1')) return false
 
 	if (await screens.confirm(11, 6, 'Investment Group')) await screens.type(11, 28, investmentGroup.padStart(4, '0'))
@@ -1206,6 +1222,7 @@ export async function processFMFCPS(investmentGroup: string, fundValDate: Date):
 }
 
 export async function processFMPSM(option: string, investmentGroup: string, fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (!await screens.gotoFmsScreen('FMPSM', 'FIC665M1')) return false
 
 	await typeReportDestination(21, 2, 22, 'Report Dest')
@@ -1226,6 +1243,7 @@ export async function processFMPSM(option: string, investmentGroup: string, fund
 }
 
 export async function processFMTCFP(investmentGroup: string, _fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (!await screens.gotoFmsScreen('FMTCFP', 'FIS425M1')) return false
 
 	await screens.type(7, 24, investmentGroup.padStart(4, '0'))
@@ -1246,6 +1264,7 @@ export async function processFMTCFP(investmentGroup: string, _fundValDate: Date)
 }
 
 export async function processFMPDDD(_fundValDate: Date, option: string): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (!await screens.gotoFMPDDDscreen()) return false
 
 	const isUnitTrust = option === '1' && await screens.confirm(7, 29, 'Unit Trust')
@@ -1262,6 +1281,7 @@ export async function processFMPDDD(_fundValDate: Date, option: string): Promise
 }
 
 export async function processFMPMIP(_fundValDate: Date, option: string): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 10) return false
 	if (!await screens.gotoFMPMIPDscreen()) return false
 	if (!await screens.confirm(13, 17, 'Unit Trust')) return false
 
@@ -1275,6 +1295,7 @@ export async function processFMPMIP(_fundValDate: Date, option: string): Promise
 }
 
 export async function processFMPMIPD(fundValDate: Date, option: string): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	return processFMPMIP(fundValDate, option)
 }
 
@@ -1288,6 +1309,7 @@ async function findFMATMRow(accountNumber: string, description: string): Promise
 }
 
 export async function processFMAR(environment: string, _fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (!await screens.gotoFmsScreen('FMAR', 'FIS310M1')) return false
 
 	if (environment === 'UAT1') {
@@ -1360,6 +1382,7 @@ export async function processFMAR(environment: string, _fundValDate: Date): Prom
 }
 
 export async function processFMRBFSR(_fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (!await screens.gotoFmsScreen('FMRBFSR', 'FMS498M1')) return false
 
 	await typeReportDestination(12, 2, 18, 'Report Dest')
@@ -1371,6 +1394,7 @@ export async function processFMRBFSR(_fundValDate: Date): Promise<boolean> {
 }
 
 export async function processFMRBRR(investmentGroup: string, fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 10) return true
 	if (!await screens.gotoFmsScreen('FMRBRR', 'FMS794M1')) return false
 
 	if (await screens.confirm(7, 12, 'Investment Group')) await screens.type(7, 35, investmentGroup.padStart(4, '0'))
@@ -1411,6 +1435,7 @@ export async function processFMRBRR(investmentGroup: string, fundValDate: Date):
 }
 
 export async function processFMPRBMR(investmentGroup: string, _fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (!await screens.gotoFmsScreen('FMPRBMR', 'FIS818M1')) return false
 
 	if (await screens.confirm(6, 12, 'Investment Group')) await screens.type(6, 35, investmentGroup.padStart(4, '0'))
@@ -1436,6 +1461,7 @@ export async function processFMPRBMR(investmentGroup: string, _fundValDate: Date
 }
 
 export async function processFMPDCD(investmentGroup: string, _fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (!await screens.gotoFmsScreen('FMPDCD', 'FMS485M1')) return false
 
 	if (await screens.confirm(7, 2, 'Investment Grup')) await screens.type(7, 22, investmentGroup.padStart(4, '0'))
@@ -1458,6 +1484,7 @@ export async function processFMPDCD(investmentGroup: string, _fundValDate: Date)
 }
 
 export async function processFMPPD(investmentGroup: string, _fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (!await screens.gotoFmsScreen('FMPPD', 'FMS259M1')) return false
 
 	await screens.typeAndEnter(12, 26, investmentGroup.padEnd(4, ' '))
@@ -1470,6 +1497,7 @@ export async function processFMPPD(investmentGroup: string, _fundValDate: Date):
 }
 
 export async function processFMMFRP(_fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (!await screens.gotoFmsScreen('FMMFRP', 'FIS843M1')) return false
 
 	for (let row = 12; row <= 22; row += 1) {
@@ -1485,6 +1513,7 @@ export async function processFMMFRP(_fundValDate: Date): Promise<boolean> {
 }
 
 export async function processFMMFA(_environment: string, investmentGroup: string, fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (!await screens.gotoFMMFAscreen()) return false
 	if (!await screens.waitForScreen('FIS735M1')) return true
 
@@ -1505,6 +1534,7 @@ export async function processFMMFA(_environment: string, investmentGroup: string
 }
 
 export async function processFMPMFI(_fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (!await screens.gotoFMPMFIscreen()) return false
 
 	await screens.typeAndEnter(18, 31, '1')
@@ -1522,6 +1552,7 @@ export async function processFMPMFI(_fundValDate: Date): Promise<boolean> {
 }
 
 export async function processFMMFD(_investmentGroup: string, _fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (!await screens.gotoFMMFDscreen()) return false
 
 	await typeReportDestination(10, 2, 22, 'Report Destination')
@@ -1543,6 +1574,7 @@ export async function processFMMFD(_investmentGroup: string, _fundValDate: Date)
 }
 
 export async function processFMCFP(_fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (!await screens.gotoFmsScreen('FMCFP', 'FIS420M1')) return false
 
 	await typeReportDestination(12, 2, 24, 'Report Destination')
@@ -1554,6 +1586,7 @@ export async function processFMCFP(_fundValDate: Date): Promise<boolean> {
 }
 
 export async function processFMPASF(_fundValDate: Date, option: string): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	const fundValDate = _fundValDate
 	if (!await screens.gotoFmsScreen('FMPASF', 'FIS156M1')) return false
 	if (!await screens.confirm(9, 13, 'Product group to be processed')) return false
@@ -1592,6 +1625,7 @@ export async function processFMPASF(_fundValDate: Date, option: string): Promise
 }
 
 export async function processFMPDD(_fundValDate: Date, option: string): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (!await screens.gotoFMPDDscreen()) return false
 	if (!await screens.confirm(7, 29, 'Unit Trust')) return false
 
@@ -1606,6 +1640,7 @@ export async function processFMPDD(_fundValDate: Date, option: string): Promise<
 }
 
 export async function processFMAPTP(investmentGroup: string): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (!await screens.gotoFmsScreen('FMAPTP', 'FIS122M1')) return false
 
 	await screens.typeAndEnter(7, 22, investmentGroup.padStart(4, ' '))
@@ -1656,6 +1691,7 @@ async function enterFMDIRMdata(_effectiveDate: Date, _typeOfInterestRate: string
 }
 
 export async function processFMDIRM(investmentGroup: string, effectiveDate: Date, typeOfInterestRate: string, fixedInterestRate: string, fromRandomInterestRate: string, toRandomInterestRate: string): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	if (!await screens.gotoFmsScreen('FMDIRM', 'FIS863M1')) return false
 
 	const investmentGroupRow = await findFMDIRMRow(investmentGroup)
@@ -1708,6 +1744,7 @@ export async function processFMDIRM(investmentGroup: string, effectiveDate: Date
 }
 
 export async function processFMDP(investmentGroup: string, fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	let repeat = true
 
 	while (repeat) {
@@ -1945,6 +1982,7 @@ async function getFileNumber(environment: string, fundValDate: Date): Promise<nu
 }
 
 export async function processFMDC(environment: string, companyName: string, fundValDate: Date): Promise<boolean> {
+	if (Math.floor(Math.random() * 20) > 0) return false
 	const fileNumber = await getFileNumber(environment, fundValDate)
 	if (fileNumber <= 0) {
 		await writeToProcessingLog(environment, companyName, fundValDate, 'FMDC not executed because FMDJC says no transactions')

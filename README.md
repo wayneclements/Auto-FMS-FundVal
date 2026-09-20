@@ -7,8 +7,18 @@ A TypeScript, React, and Postgres version of the original C# WinForms fund valua
 - Vite React frontend for run sheet, environment, company, FundVal type, date, readiness, analyse, export, and import workflow controls.
 - Fund Valuation Date on the main form is entered and displayed in `DD/MM/YYYY` format.
 - A Process Details panel (opened via the NEXT button) displays the selected FundVal type, company, environment, and weekday/date in its heading and exposes the process/investment-group button grid.
-- Before populating the Process Details grid, the application reads investment-group statuses from the FMS `FMIGM` screen. An investment group is shown as a light-blue box only when it is present in FMS and its corresponding `process_investment_group.status` value is true; other grid positions remain empty and transparent.
-- Process buttons turn light green on a successful run and red when the process fails or returns no result.
+- Before populating the Process Details grid, the application reads investment-group statuses from the FMS `FMIGM` screen. An investment group is shown as a light-blue `not_done` button only when it is present in FMS and its corresponding `process_investment_group.status` value is true; other grid positions remain transparent and `irrelevant`.
+- Investment-group buttons use four runtime states:
+  - `successful`: green; the investment group completed successfully.
+  - `failed`: red; the investment group failed and remains eligible to run again.
+  - `not_done`: blue; the investment group has not run yet and is eligible to run.
+  - `irrelevant`: transparent; the investment group is not applicable and is skipped.
+- Per-investment-group process handlers only run `failed` and `not_done` investment-group buttons. `successful` and `irrelevant` buttons are skipped.
+- Process row buttons turn light green on a successful run and red when the process fails or returns no result.
+- The Process Details panel includes bottom action buttons:
+  - `AUTO` runs the displayed process rows sequentially, stopping at the first failed process.
+  - `REFRESH` reloads process and investment-group status data for the current selection and clears stale result indicators.
+  - `CANCEL` returns to the main selection form and clears transient process results.
 - An FMS terminal-automation layer (`src/ui/screens.ts`, `src/ui/actions.ts`, `src/ui/process.ts`) that incrementally ports the original C# WinForms process handlers (e.g. `processFMSD`, `processFMFVRM`, `processFMFV`, `processFMBAL`, `processFMPI`, `processFMPRD`, `processFMPID`, `processFMPFBBR`) screen-by-screen. Handlers not yet ported from the C# source remain as placeholder stubs.
 - Core screen-navigation logic in `src/ui/screens.ts` (`gotoFmsScreen` and `gotoFmsScreenByName`) has been ported from the original C# `GotoFmsScreen` overloads, handling FMS login/session confirmation, environment selection, and retrying navigation to the requested screen. Low-level terminal I/O primitives they depend on (e.g. `confirm`, `typeAndEnter`, `getScreenText`, `waitForIdle`) remain stubs pending the real 3270 terminal integration.
 - Express TypeScript API under `server/`.

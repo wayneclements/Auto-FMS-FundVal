@@ -1,18 +1,26 @@
 import { processFMDIH, processFMITIH, processFMPPFR, processFMPPP, processFMPPPD, processFMPIV, processFMFVRM, processFMPFV, processFMFV, processFMBAL, processFMPI, processFMPRD, processFMPID, processFMPFBBR, processFMATI, processFMAR, processFMAPTP, processFMBS, processFMCP, processFMDC, processFMDP, processFMDIRM, processFMDRM, processFMCIA, processFMFCPS, processFMHAI, processFMPRPC, processFMRBFSR, processFMRBRR, processFMPRBMR, processFMPSM, processFMPDDD, processFMTCFP, processFMCFP, processFMMFRP, processFMPDCD, processFMMFA, processFMPCP, processFMPASF, processFMPPD, processFMPDD, processFMMFD, processFMPMFI, processFMPMIP, processFMPMIPD, processFMSD, processFMTUE } from './actions.ts'
 
+export type InvestmentGroupButtonStatus = 'successful' | 'failed' | 'not_done' | 'irrelevant'
+
 export type ProcessInvestmentGroup = {
   name: string
   state: boolean
+  status?: InvestmentGroupButtonStatus
 }
 
 export type InvestmentGroupResultCallback = (investmentGroupName: string, success: boolean) => void
+
+function isActiveInvestmentGroup(group: ProcessInvestmentGroup): boolean {
+  const status = group.status ?? (group.state ? 'not_done' : 'irrelevant')
+  return status === 'failed' || status === 'not_done'
+}
 
 export async function processFMSDbutton(_environment: string, _company: string, _investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date) {
   return processFMSD(_fundValDate)
 }
 
 export async function processFMPPFRbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
-  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  const activeInvestmentGroups = investmentGroups.filter(isActiveInvestmentGroup)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
@@ -25,7 +33,7 @@ export async function processFMPPFRbutton(_environment: string, _company: string
 }
 
 export async function processFMPPPbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
-  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  const activeInvestmentGroups = investmentGroups.filter(isActiveInvestmentGroup)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
@@ -42,7 +50,7 @@ export async function processFMPIVbutton(_environment: string, _company: string,
 }
 
 export async function processFMFVRMbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
-  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  const activeInvestmentGroups = investmentGroups.filter(isActiveInvestmentGroup)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
@@ -59,7 +67,7 @@ export async function processFMPFVbutton(_environment: string, _company: string,
 }
 
 export async function processFMFVbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
-  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  const activeInvestmentGroups = investmentGroups.filter(isActiveInvestmentGroup)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
@@ -72,7 +80,7 @@ export async function processFMFVbutton(_environment: string, _company: string, 
 }
 
 export async function processFMBALbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
-  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  const activeInvestmentGroups = investmentGroups.filter(isActiveInvestmentGroup)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
@@ -89,7 +97,7 @@ export async function processFMPIbutton(_environment: string, _company: string, 
 }
 
 export async function processFMPRDbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
-  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  const activeInvestmentGroups = investmentGroups.filter(isActiveInvestmentGroup)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
@@ -106,7 +114,7 @@ export async function processFMPIDbutton(_environment: string, _company: string,
 }
 
 export async function processFMPPPDbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
-  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  const activeInvestmentGroups = investmentGroups.filter(isActiveInvestmentGroup)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
@@ -147,7 +155,7 @@ export async function processFMTUEbutton(_environment: string, _company: string,
 }
 
 export async function processFMDRMbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
-  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  const activeInvestmentGroups = investmentGroups.filter(isActiveInvestmentGroup)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
@@ -160,7 +168,7 @@ export async function processFMDRMbutton(_environment: string, _company: string,
 }
 
 export async function processFMCIAbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
-  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  const activeInvestmentGroups = investmentGroups.filter(isActiveInvestmentGroup)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
@@ -173,7 +181,7 @@ export async function processFMCIAbutton(_environment: string, _company: string,
 }
 
 export async function processFMDPbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
-  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  const activeInvestmentGroups = investmentGroups.filter(isActiveInvestmentGroup)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
@@ -194,7 +202,7 @@ export async function processFMPRPCbutton(_environment: string, _company: string
 }
 
 export async function processFMFCPSbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
-  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  const activeInvestmentGroups = investmentGroups.filter(isActiveInvestmentGroup)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
@@ -211,7 +219,7 @@ export async function processFMRBFSRbutton(_environment: string, _company: strin
 }
 
 export async function processFMPSMbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
-  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  const activeInvestmentGroups = investmentGroups.filter(isActiveInvestmentGroup)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
@@ -224,7 +232,7 @@ export async function processFMPSMbutton(_environment: string, _company: string,
 }
 
 export async function processFMPDDDbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date) {
-  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  const activeInvestmentGroups = investmentGroups.filter(isActiveInvestmentGroup)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const _investmentGroup of activeInvestmentGroups) {
@@ -239,7 +247,7 @@ export async function processFMARbutton(environment: string, _company: string, _
 }
 
 export async function processFMTCFPbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
-  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  const activeInvestmentGroups = investmentGroups.filter(isActiveInvestmentGroup)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
@@ -260,7 +268,7 @@ export async function processFMPMIPbutton(_environment: string, _company: string
 }
 
 export async function processFMRBRRbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
-  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  const activeInvestmentGroups = investmentGroups.filter(isActiveInvestmentGroup)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
@@ -273,7 +281,7 @@ export async function processFMRBRRbutton(_environment: string, _company: string
 }
 
 export async function processFMPRBMRbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
-  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  const activeInvestmentGroups = investmentGroups.filter(isActiveInvestmentGroup)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
@@ -286,7 +294,7 @@ export async function processFMPRBMRbutton(_environment: string, _company: strin
 }
 
 export async function processFMPDCDbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
-  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  const activeInvestmentGroups = investmentGroups.filter(isActiveInvestmentGroup)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
@@ -303,7 +311,7 @@ export async function processFMMFRPbutton(_environment: string, _company: string
 }
 
 export async function processFMMFAbutton(environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
-  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  const activeInvestmentGroups = investmentGroups.filter(isActiveInvestmentGroup)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
@@ -320,7 +328,7 @@ export async function processFMPASFbutton(_environment: string, _company: string
 }
 
 export async function processFMPPDbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
-  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  const activeInvestmentGroups = investmentGroups.filter(isActiveInvestmentGroup)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
@@ -333,7 +341,7 @@ export async function processFMPPDbutton(_environment: string, _company: string,
 }
 
 export async function processFMDIRMbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
-  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  const activeInvestmentGroups = investmentGroups.filter(isActiveInvestmentGroup)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
@@ -355,7 +363,7 @@ export async function processFMPSMREPbutton(_environment: string, _company: stri
 }
 
 export async function processFMPFBBRbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
-  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  const activeInvestmentGroups = investmentGroups.filter(isActiveInvestmentGroup)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
@@ -385,7 +393,7 @@ export async function processFMCFPbutton(_environment: string, _company: string,
 }
 
 export async function processFMMFDbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
-  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  const activeInvestmentGroups = investmentGroups.filter(isActiveInvestmentGroup)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {
@@ -402,7 +410,7 @@ export async function processFMPDDbutton(_environment: string, _company: string,
 }
 
 export async function processFMAPTPbutton(_environment: string, _company: string, investmentGroups: ProcessInvestmentGroup[], _fundValDate: Date, onInvestmentGroupResult?: InvestmentGroupResultCallback) {
-  const activeInvestmentGroups = investmentGroups.filter((group) => group.state)
+  const activeInvestmentGroups = investmentGroups.filter(isActiveInvestmentGroup)
   if (activeInvestmentGroups.length === 0) return false
 
   for (const investmentGroup of activeInvestmentGroups) {

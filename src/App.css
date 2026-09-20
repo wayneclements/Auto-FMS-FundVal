@@ -338,22 +338,43 @@
   cursor: pointer;
 }
 
-.process-grid-button.active-investment-group {
+.process-grid-button.investment-group-not_done {
   border-radius: 12px;
   background: #cfe8f7;
 }
 
-.process-grid-button.empty-investment-group {
+.process-grid-button.investment-group-irrelevant {
   pointer-events: none;
 }
 
-.process-grid-button.process-result-success {
+.process-grid-button.process-result-success,
+.process-grid-button.investment-group-successful {
   background: #b9e6b0;
 }
 
-.process-grid-button.process-result-failure {
+.process-grid-button.process-result-failure,
+.process-grid-button.investment-group-failed {
   background: #e02424;
   color: #fff;
+}
+
+.process-form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.process-auto-button,
+.process-refresh-button,
+.process-cancel-button {
+  min-width: 72px;
+  height: 24px;
+  border: 1px solid #cfcfcf;
+  border-radius: 3px;
+  background: #fbfbfb;
+  color: #000;
+  cursor: pointer;
 }
 
 @media (max-width: 720px) {

@@ -35,6 +35,8 @@ type Process = {
   }>
 }
 
+type InvestmentGroupButtonStatus = processModule.InvestmentGroupButtonStatus
+
 const environments: Environment[] = ['UAT1', 'UAT2', 'PROD']
 
 function inferEnvironment(runSheetName: string): Environment | '' {
@@ -83,6 +85,20 @@ function renderRichText(value: string): ReactNode[] {
   ))
 }
 
+function investmentGroupButtonStatus(investmentGroup: Process['investmentGroups'][number] | undefined, processResult: boolean | undefined): InvestmentGroupButtonStatus {
+  if (!investmentGroup?.state) return 'irrelevant'
+  if (processResult === true) return 'successful'
+  if (processResult === false) return 'failed'
+  return 'not_done'
+}
+
+function investmentGroupsWithButtonStatus(process: Process, results: Record<string, Record<string, boolean>>): processModule.ProcessInvestmentGroup[] {
+  return process.investmentGroups.map((investmentGroup) => ({
+    ...investmentGroup,
+    status: investmentGroupButtonStatus(investmentGroup, results[process.name]?.[investmentGroup.name]),
+  }))
+}
+
 function readOnlyReason(type: FundValType | undefined, selectedDate: string) {
   if (!type || !selectedDate) return 'Selections are incomplete.'
   if (!type.lastFundValDate || !type.lastTotalUnitsExtractRunDate) return ''
@@ -129,6 +145,7 @@ function App() {
   const [processResults, setProcessResults] = useState<Record<string, boolean>>({})
   const [investmentGroupResults, setInvestmentGroupResults] = useState<Record<string, Record<string, boolean>>>({})
   const [processNotes, setProcessNotes] = useState('')
+  const [autoRunning, setAutoRunning] = useState(false)
   const processFormRef = useRef<HTMLElement>(null)
 
   function setFundValDate(iso: string) {
@@ -294,7 +311,45 @@ function App() {
     setShowProcessForm(true)
   }
 
-  async function handleProcessButtonClick(processName: string, company: string, investmentGroups: processModule.ProcessInvestmentGroup[], fundValDate: Date) {
+  function handleCancel() {
+    if (autoRunning) return
+    setShowProcessForm(false)
+    setProcessNotes('')
+    setProcessResults({})
+    setInvestmentGroupResults({})
+  }
+
+  async function handleRefresh() {
+    if (!runSheetName || !companyName || !fundValTypeName) return
+
+    try {
+      const items = await getJson<Process[]>(`/api/run-sheets/${encodeURIComponent(runSheetName)}/companies/${encodeURIComponent(companyName)}/fund-val-types/${encodeURIComponent(fundValTypeName)}/processes`)
+      const investmentGroupStatuses = await getListOfInvestmentGroupStatus()
+
+      setActiveInvestmentGroups(
+        Array.from(investmentGroupStatuses)
+          .filter(([, status]) => status)
+          .map(([investmentGroup]) => investmentGroup),
+      )
+      setProcesses(items.map((process) => ({
+        ...process,
+        investmentGroups: process.investmentGroups
+          .filter((investmentGroup) => investmentGroupStatuses.get(investmentGroup.name))
+          .map((investmentGroup) => ({
+            ...investmentGroup,
+            state: investmentGroup.state,
+          })),
+      })))
+      setProcessNotes('')
+      setProcessResults({})
+      setInvestmentGroupResults({})
+      setError('')
+    } catch (currentError: unknown) {
+      setError(currentError instanceof Error ? currentError.message : 'Could not refresh processes')
+    }
+  }
+
+  async function handleProcessButtonClick(processName: string, company: string, investmentGroups: processModule.ProcessInvestmentGroup[], fundValDate: Date): Promise<boolean> {
     setError('')
     try {
       let result: boolean = false;
@@ -583,8 +638,34 @@ function App() {
         setStatus('Process did not return a result')
         setProcessResults((previous) => ({ ...previous, [processName]: false }))
       }
+      return result
     } catch (currentError: unknown) {
       setError(currentError instanceof Error ? currentError.message : `Could not run ${processName}.`)
+      setProcessResults((previous) => ({ ...previous, [processName]: false }))
+      return false
+    }
+  }
+
+  async function handleAuto() {
+    if (autoRunning || !fundValDate) return
+
+    setAutoRunning(true)
+    setError('')
+    setStatus('Automatic processing started')
+    setProcessResults({})
+    setInvestmentGroupResults({})
+
+    try {
+      for (const process of processes.slice(0, 20)) {
+        const result = await handleProcessButtonClick(process.name, companyName, investmentGroupsWithButtonStatus(process, investmentGroupResults), new Date(fundValDate))
+        if (!result) {
+          setStatus(`Automatic processing stopped at ${process.name}`)
+          return
+        }
+      }
+      setStatus('Automatic processing completed successfully')
+    } finally {
+      setAutoRunning(false)
     }
   }
 
@@ -647,7 +728,7 @@ function App() {
 
     let current = true
 
-    async function loadProcesses() {
+    void (async () => {
       try {
         const items = await getJson<Process[]>(`/api/run-sheets/${encodeURIComponent(runSheetName)}/companies/${encodeURIComponent(companyName)}/fund-val-types/${encodeURIComponent(fundValTypeName)}/processes`)
         const investmentGroupStatuses = await getListOfInvestmentGroupStatus()
@@ -671,9 +752,7 @@ function App() {
         if (!current) return
         setError(currentError instanceof Error ? currentError.message : 'Could not load processes')
       }
-    }
-
-    void loadProcesses()
+    })()
 
     return () => {
       current = false
@@ -802,10 +881,14 @@ function App() {
                       : investmentGroup
                         ? investmentGroupResults[process.name]?.[investmentGroup.name]
                         : undefined
+                    const investmentGroupStatus = column > 0
+                      ? investmentGroupButtonStatus(investmentGroup, processResult)
+                      : undefined
                     const className = [
                       'process-grid-button',
-                      investmentGroup?.state ? 'active-investment-group' : column > 0 ? 'empty-investment-group' : '',
-                      processResult === true ? 'process-result-success' : processResult === false ? 'process-result-failure' : '',
+                      column > 0 && investmentGroupStatus ? `investment-group-${investmentGroupStatus}` : '',
+                      column === 0 && processResult === true ? 'process-result-success' : '',
+                      column === 0 && processResult === false ? 'process-result-failure' : '',
                     ].filter(Boolean).join(' ')
 
                     return (
@@ -813,10 +896,11 @@ function App() {
                         type="button"
                         key={`${row}-${column}`}
                         className={className}
-                        title={column === 0 ? process.description : undefined}
+                        title={column === 0 ? process.description : investmentGroupStatus}
+                        aria-label={column > 0 ? `${process.name} ${label || 'investment group'} ${investmentGroupStatus}` : undefined}
                         disabled={!label || (column === 0 && !fundValDate)}
                         onMouseEnter={column === 0 ? () => setProcessNotes(process.notes ?? '') : undefined}
-                        onClick={column === 0 ? () => void handleProcessButtonClick(process.name, companyName, process.investmentGroups, new Date(fundValDate)) : undefined}
+                        onClick={column === 0 ? () => void handleProcessButtonClick(process.name, companyName, investmentGroupsWithButtonStatus(process, investmentGroupResults), new Date(fundValDate)) : undefined}
                       >
                         {label ?? ''}
                       </button>
@@ -824,6 +908,11 @@ function App() {
                   })
                 )),
               ]}
+            </div>
+            <div className="process-form-actions">
+              <button type="button" className="process-auto-button" onClick={() => void handleAuto()} disabled={autoRunning || !fundValDate}>AUTO</button>
+              <button type="button" className="process-refresh-button" onClick={() => void handleRefresh()} disabled={autoRunning}>REFRESH</button>
+              <button type="button" className="process-cancel-button" onClick={handleCancel} disabled={autoRunning}>CANCEL</button>
             </div>
           </form>
         </section>
