@@ -99,6 +99,18 @@ function investmentGroupsWithButtonStatus(process: Process, results: Record<stri
   }))
 }
 
+function getAutoStartIndex(processes: Process[], processResults: Record<string, boolean>): number {
+  const visibleProcesses = processes.slice(0, 20)
+
+  for (let index = visibleProcesses.length - 1; index >= 0; index -= 1) {
+    const result = processResults[visibleProcesses[index].name]
+    if (result === false) return index
+    if (result === true) return index + 1
+  }
+
+  return 0
+}
+
 function readOnlyReason(type: FundValType | undefined, selectedDate: string) {
   if (!type || !selectedDate) return 'Selections are incomplete.'
   if (!type.lastFundValDate || !type.lastTotalUnitsExtractRunDate) return ''
@@ -652,11 +664,10 @@ function App() {
     setAutoRunning(true)
     setError('')
     setStatus('Automatic processing started')
-    setProcessResults({})
-    setInvestmentGroupResults({})
 
     try {
-      for (const process of processes.slice(0, 20)) {
+      const startIndex = getAutoStartIndex(processes, processResults)
+      for (const process of processes.slice(0, 20).slice(startIndex)) {
         const result = await handleProcessButtonClick(process.name, companyName, investmentGroupsWithButtonStatus(process, investmentGroupResults), new Date(fundValDate))
         if (!result) {
           setStatus(`Automatic processing stopped at ${process.name}`)
