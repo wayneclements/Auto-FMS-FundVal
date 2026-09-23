@@ -34,7 +34,19 @@ A TypeScript, React, and Postgres version of the original C# WinForms fund valua
    npm install
    ```
 
-2. Create the local `testops_portal_db` database and `testops_portal` schema by running `database/setup-db.sql` as a Postgres administrator.
+2. Create the local database and application schema by running the setup script as a Postgres administrator:
+
+   ```powershell
+   psql -U postgres -f database\setup-db.sql
+   ```
+
+   The script is rerunnable and creates the `testopsdb` role, `testops_portal_db` database, `testops_portal` schema, tables, constraints, indexes, and grants. Override its defaults with `psql` variables when required:
+
+   ```powershell
+   psql -U postgres -v database_name=my_database -v app_user=my_user -v app_password=my_password -f database\setup-db.sql
+   ```
+
+   To create only the schema objects in the currently selected database, run `psql -f database\schema.sql`.
 
 3. Copy `.env.example` to `.env` and update `DATABASE_URL` if needed.
 
@@ -49,7 +61,7 @@ If `DATABASE_URL` is not configured, the API starts in demo mode with the same s
 
 ## Database Migrations
 
-Run these migrations against `testops_portal_db` after the base `testops_portal` tables are available:
+The setup script includes the current schema. The following scripts are retained for upgrading older databases:
 
 - `database/add-process-investment-group-status.sql` adds the `status` column to `testops_portal.process_investment_group`, assigns existing records an approximately 80/20 true/false distribution, and defaults future records to `true`. This value controls whether an investment group that is present in FMS is highlighted in the Process Details grid.
 - `database/add-fundval-type-process-notes.sql` adds the nullable `notes` text column to `testops_portal.fundval_type_process`.
